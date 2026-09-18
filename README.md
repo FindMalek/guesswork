@@ -235,11 +235,12 @@ history parsing are ~0.1s).
 
 Every request is small: your typed prefix plus ~100 short command strings in,
 a probability distribution over ~100 IDs out. Both providers price Jev input
-at **$42 per billion tokens** ([typesafe.ai](https://typesafe.ai),
-[Cloudflare's model card](https://dash.cloudflare.com)), and TypeSafe
-separately publishes **$0.000081 per request** as a representative cost for
-this kind of classification task — about 245x cheaper than routing the same
-request through a general-purpose chat model.
+at **$42 per billion tokens** ([typesafe.ai](https://typesafe.ai); Cloudflare
+publishes the same rate on its `typesafe/jev` model card, which sits behind a
+Cloudflare login so there's no public link to point at directly), and
+TypeSafe separately publishes **$0.000081 per request** as a representative
+cost for this kind of classification task — about 245x cheaper than routing
+the same request through a general-purpose chat model.
 
 A single suggestion costs a fraction of a cent; a hundred of them in one
 heavy coding day is still under a penny. Even typing enough to trigger a few
@@ -265,7 +266,7 @@ node src/cli.ts --help
 ```sh
 npm test              # unit tests (history parsing, request shape, gating)
 npm run typecheck
-npm run test:e2e      # drives a real zsh in a pty; needs TYPESAFE_API_KEY
+npm run test:e2e      # drives a real zsh in a pty; needs a provider's credentials (see above)
 ```
 
 The e2e test types into an interactive `zsh -f` with a throwaway history file
@@ -273,6 +274,16 @@ and checks that suggestions appear, that typing along a suggestion does not
 re-request, that <kbd>→</kbd> and <kbd>^E</kbd> accept and run the command (in
 emacs and vi keymaps), that nonsense yields nothing, and that a stale response
 is discarded when the buffer changes mid-request.
+
+## Contributing
+
+Every PR needs a linked issue first — open one with the
+[detailed-task template](https://github.com/findmalek/guesswork/issues/new/choose)
+(context, current state, a concrete acceptance checklist) before writing code;
+if the branch name follows `type/NNN-slug` or `NNN-slug`, a bot links the PR
+to it automatically, otherwise add `Closes #N` to the PR body yourself. Work
+is tracked on the [Guesswork project board](https://github.com/users/findmalek/projects/14).
+The [PR template](.github/pull_request_template.md) covers the rest.
 
 ## Uninstall
 
