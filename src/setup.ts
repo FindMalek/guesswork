@@ -12,6 +12,7 @@ import { noul, TypeSafeClient } from "@typesafe-ai/sdk";
 import * as p from "@clack/prompts";
 import { anthropicFetch } from "./anthropic.ts";
 import { cloudflareFetch } from "./cloudflare.ts";
+import { groqFetch } from "./groq.ts";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BLOCK_START = "# >>> guesswork >>>";
@@ -26,8 +27,8 @@ below pre-fills that step (so e.g. --provider alone still prompts for
 credentials interactively). Without a TTY, every needed option must be
 passed — there's nothing to prompt into.
 
-  --provider <typesafe|cloudflare|anthropic>
-  --api-key <key>                  TypeSafe: your TYPESAFE_API_KEY; Anthropic: your ANTHROPIC_API_KEY
+  --provider <typesafe|cloudflare|anthropic|groq>
+  --api-key <key>                  TypeSafe: your TYPESAFE_API_KEY; Anthropic: your ANTHROPIC_API_KEY; Groq: your GROQ_API_KEY
   --account-id <id>                Cloudflare: your account ID
   --api-token <token>              Cloudflare: an API token with Workers AI access
   --rc <path>                      Shell rc file to edit (default: $ZDOTDIR/.zshrc or ~/.zshrc)
@@ -75,11 +76,11 @@ function parseCliArgs(): Args {
 
 // ------------------------------------------------------------- providers --
 
-type Provider = "typesafe" | "cloudflare" | "anthropic";
+type Provider = "typesafe" | "cloudflare" | "anthropic" | "groq";
 
 interface Credentials {
   provider: Provider;
-  apiKey: string | undefined; // typesafe, anthropic
+  apiKey: string | undefined; // typesafe, anthropic, groq
   accountId: string | undefined; // cloudflare
   apiToken: string | undefined; // cloudflare
 }
@@ -93,15 +94,20 @@ function exitOnCancel<T>(value: T | typeof p.CANCEL_SYMBOL): T {
 }
 
 async function pickProvider(args: Args, tty: boolean): Promise<Provider> {
-  if (args.provider === "typesafe" || args.provider === "cloudflare" || args.provider === "anthropic") {
+  if (
+    args.provider === "typesafe" ||
+    args.provider === "cloudflare" ||
+    args.provider === "anthropic" ||
+    args.provider === "groq"
+  ) {
     return args.provider;
   }
   if (args.provider) {
-    console.error(`unknown --provider "${args.provider}"; expected "typesafe", "cloudflare", or "anthropic"`);
+    console.error(`unknown --provider "${args.provider}"; expected "typesafe", "cloudflare", "anthropic", or "groq"`);
     process.exit(2);
   }
   if (!tty) {
-    console.error("no TTY and no --provider given; pass --provider typesafe|cloudflare|anthropic (see --help)");
+    console.error("no TTY and no --provider given; pass --provider typesafe|cloudflare|anthropic|groq (see --help)");
     process.exit(2);
   }
   return exitOnCancel(
@@ -114,6 +120,11 @@ async function pickProvider(args: Args, tty: boolean): Promise<Provider> {
           value: "anthropic",
           label: "Anthropic (Claude)",
           hint: "fallback: a real Claude model standing in for Jev, not Jev itself",
+        },
+        {
+          value: "groq",
+          label: "Groq",
+          hint: "fallback: fastest — LPU hardware — a real chat model standing in for Jev, not Jev itself",
         },
       ],
     }),
@@ -161,6 +172,30 @@ async function collectCredentials(provider: Provider, args: Args, tty: boolean):
     return { provider, apiKey, accountId: undefined, apiToken: undefined };
   }
 
+  if (provider === "groq") {
+    let apiKey = args.apiKey;
+    if (!apiKey) {
+      if (!tty) {
+        console.error("no TTY and no --api-key given (see --help)");
+        process.exit(2);
+      }
+      p.note(
+        "This runs a real chat model in place of Jev, not Jev itself — a\n" +
+          "fallback for when you'd rather not sign up for TypeSafe or Cloudflare,\n" +
+          "optimized for speed (Groq's custom LPU hardware).\n" +
+          "Get a key at https://console.groq.com/keys",
+        "Groq",
+      );
+      apiKey = exitOnCancel(
+        await p.password({
+          message: "Paste your GROQ_API_KEY",
+          validate: (v) => (v ? undefined : "an API key is required"),
+        }),
+      );
+    }
+    return { provider, apiKey, accountId: undefined, apiToken: undefined };
+  }
+
   let accountId = args.accountId;
   let apiToken = args.apiToken;
   if (!accountId || !apiToken) {
@@ -201,6 +236,16 @@ function buildClient(creds: Credentials): TypeSafeClient {
       timeout: 8000,
       logLevel: "error",
       fetch: anthropicFetch({ apiKey }),
+    });
+  }
+  if (creds.provider === "groq") {
+    const apiKey = creds.apiKey!;
+    return new TypeSafeClient({
+      apiKey,
+      baseURL: "https://api.groq.com/openai/v1",
+      timeout: 8000,
+      logLevel: "error",
+      fetch: groqFetch({ apiKey }),
     });
   }
   const { accountId, apiToken } = creds as { accountId: string; apiToken: string };
@@ -308,7 +353,9 @@ async function main(): Promise<void> {
       ? [`export TYPESAFE_API_KEY=${creds.apiKey}`]
       : creds.provider === "anthropic"
         ? [`export ANTHROPIC_API_KEY=${creds.apiKey}`]
-        : [`export CLOUDFLARE_ACCOUNT_ID=${creds.accountId}`, `export CLOUDFLARE_API_TOKEN=${creds.apiToken}`];
+        : creds.provider === "groq"
+          ? [`export GROQ_API_KEY=${creds.apiKey}`]
+          : [`export CLOUDFLARE_ACCOUNT_ID=${creds.accountId}`, `export CLOUDFLARE_API_TOKEN=${creds.apiToken}`];
   writeBlock(path, [...exportLines, `source "${join(REPO_ROOT, "zsh/guesswork.plugin.zsh")}"`]);
 
   if (tty) {

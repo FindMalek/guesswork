@@ -92,6 +92,9 @@ prompts by passing everything after `--`:
 
 # Anthropic (fallback — see Choose a provider below)
 ./install.sh -- --provider anthropic --api-key sk-ant-...
+
+# Groq (fallback, speed-optimized — see Choose a provider below)
+./install.sh -- --provider groq --api-key gsk_...
 ```
 
 Run `./install.sh -- --help` for the full flag list (custom rc file path,
@@ -151,33 +154,45 @@ work around itself.
 
 guesswork talks to TypeSafe's Jev model either directly or through Cloudflare
 Workers AI, which hosts the same model behind its own account-scoped API —
-same model, same request/response shape, same code path either way. There's
-also a third option, Anthropic, for when you'd rather not sign up for either:
-it substitutes a real Claude model for Jev, asked to do the same structured
-evaluation task (see [#1](https://github.com/findmalek/guesswork/issues/1)
-for why a real self-hosted Jev isn't possible today) — not an equivalent
-model, a fallback.
+same model, same request/response shape, same code path either way. There are
+also two fallback options for when you'd rather not sign up for either:
+Anthropic and Groq each substitute a real general-purpose chat model for Jev,
+asked to do the same structured evaluation task (see
+[#1](https://github.com/findmalek/guesswork/issues/1) for why a real
+self-hosted Jev isn't possible today) — not equivalent models, fallbacks.
+Groq is the speed-optimized one: it runs on Groq's custom LPU hardware and
+its structured-output "strict" mode guarantees schema-valid JSON by
+constrained decoding, a stronger guarantee than Anthropic's schema-constrained
+(but not decoding-guaranteed) output.
 
-| | TypeSafe (direct) | Cloudflare Workers AI | Anthropic (fallback) |
-| --- | --- | --- | --- |
-| Runs | Jev | Jev | a real Claude model, not Jev |
-| Input price | $42 / billion tokens | $42 / billion tokens ($0.042 / million) | Claude Haiku 4.5: $1 / million tokens |
-| Context length | not published | 32,000 tokens | 200,000 tokens |
-| Credentials | one API key from [typesafe.ai](https://typesafe.ai) | an [account ID + API token](#finding-your-cloudflare-account-id-and-api-token) scoped to Workers AI | one API key from [console.anthropic.com](https://console.anthropic.com/settings/keys) |
-| Billed through | TypeSafe | Cloudflare | Anthropic |
-| Env vars | `TYPESAFE_API_KEY` | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | `ANTHROPIC_API_KEY` |
+| | TypeSafe (direct) | Cloudflare Workers AI | Anthropic (fallback) | Groq (fallback) |
+| --- | --- | --- | --- | --- |
+| Runs | Jev | Jev | a real Claude model, not Jev | a real open-weight model, not Jev |
+| Input price | $42 / billion tokens | $42 / billion tokens ($0.042 / million) | Claude Haiku 4.5: $1 / million tokens | GPT-OSS 20B: ~$0.075 / million tokens (pricing not directly verified against console.groq.com — third-party-reported, treat as approximate) |
+| Context length | not published | 32,000 tokens | 200,000 tokens | 128,000 tokens |
+| Credentials | one API key from [typesafe.ai](https://typesafe.ai) | an [account ID + API token](#finding-your-cloudflare-account-id-and-api-token) scoped to Workers AI | one API key from [console.anthropic.com](https://console.anthropic.com/settings/keys) | one API key from [console.groq.com/keys](https://console.groq.com/keys) |
+| Billed through | TypeSafe | Cloudflare | Anthropic | Groq |
+| Env vars | `TYPESAFE_API_KEY` | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | `ANTHROPIC_API_KEY` | `GROQ_API_KEY` |
 
 Prices above are each provider's own published input-token rate as of this
-writing (see [What it costs](#what-it-costs)); none publish an output price,
-and output for this task is a short probability distribution, not prose, so
-it's a small fraction of the bill regardless of provider. If you already have
-a Cloudflare account, that's usually the path of least friction; if you'd
-rather not add another vendor, TypeSafe direct is one less account. Reach for
-Anthropic only if you don't want a TypeSafe or Cloudflare account at all —
-it's a real general-purpose model standing in for a purpose-built one, so
-scores may not calibrate the same way against the default thresholds
+writing (see [What it costs](#what-it-costs)) except Groq's, which wasn't
+directly confirmable from Groq's own (client-rendered) pricing page on this
+pass and is instead sourced from third-party pricing trackers reporting
+Groq's console rates — treat it as approximate and check
+[console.groq.com](https://console.groq.com) yourself before relying on it.
+None publish an output price, and output for this task is a short probability
+distribution, not prose, so it's a small fraction of the bill regardless of
+provider. If you already have a Cloudflare account, that's usually the path
+of least friction; if you'd rather not add another vendor, TypeSafe direct is
+one less account. Reach for Anthropic or Groq only if you don't want a
+TypeSafe or Cloudflare account at all — both are real general-purpose models
+standing in for a purpose-built one, so scores may not calibrate the same way
+against the default thresholds
 (`GUESSWORK_THRESHOLD`/`GUESSWORK_MIN_SCORE`/`GUESSWORK_STRONG_SCORE`) and
-per-keystroke latency depends on a much bigger model than Jev.
+per-keystroke latency depends on a much bigger model than Jev — Groq's LPU
+hardware is built to minimize that gap, but this hasn't been benchmarked
+against real Jev latency yet (no live API key available to measure it; see
+[#11](https://github.com/findmalek/guesswork/issues/11)).
 
 ### Finding your Cloudflare Account ID and API Token
 
@@ -211,12 +226,12 @@ Set these before sourcing the plugin (i.e. above the `source` line in
 | `GUESSWORK_HIGHLIGHT`      | `fg=8`  | zle highlight spec for the suggestion                               |
 | `GUESSWORK_SHOW_SCORE`     | `1`     | Append the score, e.g. `[0.87]`                                     |
 | `GUESSWORK_NODE`           | `node`  | Node binary                                                         |
-| `GUESSWORK_MODEL`          | *(varies by provider)* | Model override — TypeSafe: Jev version; Anthropic: Claude model (default `claude-haiku-4-5`); ignored on Cloudflare |
+| `GUESSWORK_MODEL`          | *(varies by provider)* | Model override — TypeSafe: Jev version; Anthropic: Claude model (default `claude-haiku-4-5`); Groq: chat model (default `openai/gpt-oss-20b`); ignored on Cloudflare |
 | `GUESSWORK_DEBUG_LOG`      | *(unset)* | When set, every request/response is appended to this file         |
 
 Which provider is used is decided by which credentials are set — TypeSafe
-takes priority, then Cloudflare, then Anthropic, if more than one happens to
-be set — see [Choose a provider](#choose-a-provider).
+takes priority, then Cloudflare, then Anthropic, then Groq, if more than one
+happens to be set — see [Choose a provider](#choose-a-provider).
 
 ## How it works
 
@@ -259,9 +274,13 @@ Cloudflare login so there's no public link to point at directly), and
 TypeSafe separately publishes **$0.000081 per request** as a representative
 cost for this kind of classification task — about 245x cheaper than routing
 the same request through a general-purpose chat model, which is exactly what
-the Anthropic fallback does instead: Claude Haiku 4.5 runs $1 per million
-input tokens (~24x TypeSafe/Cloudflare's rate) — still cheap in absolute
-terms for a request this size, just not purpose-built-model cheap.
+the Anthropic and Groq fallbacks do instead: Claude Haiku 4.5 runs $1 per
+million input tokens (~24x TypeSafe/Cloudflare's rate), and Groq's default
+model (GPT-OSS 20B) is reportedly around $0.075 per million input tokens
+(~2x TypeSafe/Cloudflare's rate — cheapest of the fallbacks by a wide margin,
+though this figure is third-party-reported, not confirmed directly against
+Groq's own pricing page) — still cheap in absolute terms for a request this
+size either way, just not purpose-built-model cheap.
 
 A single suggestion costs a fraction of a cent; a hundred of them in one
 heavy coding day is still under a penny. Even typing enough to trigger a few
