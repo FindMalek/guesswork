@@ -230,14 +230,6 @@ sed -i.bak '/# >>> guesswork >>>/,/# <<< guesswork <<</d' ~/.zshrc
 rm -rf ~/.zsh/guesswork
 ```
 
-## Credits
-
-guesswork started as a rewrite of
-[mrnugget/jev-shell-history](https://github.com/mrnugget/jev-shell-history),
-rebranded and rebuilt around a clearer README and a one-command install. All
-credit for the original design — the prefix/fuzzy split, the Choice+Noul gate,
-the async zle plumbing — goes to that project.
-
 ## License
 
 MIT — see [LICENSE](./LICENSE).
