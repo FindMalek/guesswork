@@ -38,23 +38,44 @@ ranking understands intent instead of only comparing characters.
 
 ## Install
 
-One-liner (clones, installs dependencies, and wires up `~/.zshrc`):
+One-liner (clones the repo, installs dependencies, and launches the setup
+wizard):
 
 ```sh
 git clone https://github.com/findmalek/guesswork.git ~/.zsh/guesswork
-TYPESAFE_API_KEY=<your key> ~/.zsh/guesswork/install.sh
+~/.zsh/guesswork/install.sh
 ```
 
-Don't have a key yet? Run `./install.sh` without one — it'll skip that part
-and tell you exactly where to add it later. Get a key at
-[typesafe.ai](https://typesafe.ai).
+The wizard asks which provider to use, walks you through getting credentials
+for it, makes one live request to confirm they actually work, then writes
+everything into `~/.zshrc` for you — see [Choose a provider](#choose-a-provider)
+below for what "provider" means here and what each one costs.
 
-The installer is idempotent (safe to re-run) and only touches the block it
-manages between `# >>> guesswork >>>` / `# <<< guesswork <<<` markers in your
-`.zshrc` — nothing else in your dotfiles is touched.
+The installer (and the wizard it launches) are idempotent: safe to re-run,
+and both only touch the block managed between `# >>> guesswork >>>` /
+`# <<< guesswork <<<` markers in your `.zshrc` — nothing else in your
+dotfiles is touched. Re-running switches providers cleanly if you change
+your mind later.
 
 **Requirements:** zsh 5.9+, Node 22+ (runs the plugin's TypeScript directly,
-no build step), a TypeSafe API key.
+no build step).
+
+### Non-interactive install
+
+For scripting, CI, or an agent setting this up on your behalf, skip the
+prompts by passing everything after `--`:
+
+```sh
+# TypeSafe
+./install.sh -- --provider typesafe --api-key sk-...
+
+# Cloudflare Workers AI
+./install.sh -- --provider cloudflare --account-id <id> --api-token <token>
+```
+
+Run `./install.sh -- --help` for the full flag list (custom rc file path,
+`--skip-test` to skip the live credential check, `--yes` to skip
+confirmations).
 
 ### Manual install
 
@@ -65,7 +86,8 @@ git clone https://github.com/findmalek/guesswork.git ~/.zsh/guesswork
 cd ~/.zsh/guesswork && npm install
 ```
 
-In `~/.zshrc`:
+In `~/.zshrc` (TypeSafe shown; see the [provider table](#choose-a-provider)
+for the Cloudflare equivalent):
 
 ```zsh
 export TYPESAFE_API_KEY=...
@@ -81,9 +103,30 @@ and <kbd>^E</kbd> work in both emacs and vi keymaps (in vi mode, bind `^E` to
 ### Setting this up for someone else (Claude Code, etc.)
 
 If an AI coding agent is doing this install for you, point it at
-[`CLAUDE.md`](./CLAUDE.md) — it documents the non-interactive install path
-(`TYPESAFE_API_KEY=... ./install.sh`) so it can be done in one shot without
-back-and-forth.
+[`CLAUDE.md`](./CLAUDE.md) — it documents the non-interactive install path so
+it can be done in one shot without back-and-forth.
+
+## Choose a provider
+
+guesswork talks to TypeSafe's Jev model either directly or through Cloudflare
+Workers AI, which hosts the same model behind its own account-scoped API.
+Same model, same request/response shape, same code path either way — pick
+whichever is more convenient for you to bill and authenticate through.
+
+| | TypeSafe (direct) | Cloudflare Workers AI |
+| --- | --- | --- |
+| Input price | $42 / billion tokens | $42 / billion tokens ($0.042 / million) |
+| Context length | not published | 32,000 tokens |
+| Credentials | one API key from [typesafe.ai](https://typesafe.ai) | an [account ID](https://dash.cloudflare.com) + an [API token](https://dash.cloudflare.com/profile/api-tokens) scoped to Workers AI |
+| Billed through | TypeSafe | Cloudflare |
+| Env vars | `TYPESAFE_API_KEY` | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` |
+
+Prices above are both providers' own published input-token rates as of this
+writing (see [What it costs](#what-it-costs)); neither publishes an output
+price, and output for this task is a short probability distribution, not
+prose, so it's a small fraction of the bill either way. If you already have a
+Cloudflare account, that's usually the path of least friction; if you'd
+rather not add another vendor, TypeSafe direct is one less account.
 
 ## Configuration
 
@@ -100,8 +143,11 @@ Set these before sourcing the plugin (i.e. above the `source` line in
 | `GUESSWORK_HIGHLIGHT`      | `fg=8`  | zle highlight spec for the suggestion                               |
 | `GUESSWORK_SHOW_SCORE`     | `1`     | Append the score, e.g. `[0.87]`                                     |
 | `GUESSWORK_NODE`           | `node`  | Node binary                                                         |
-| `GUESSWORK_MODEL`          | *(SDK default, `jev-latest`)* | TypeSafe model                                |
+| `GUESSWORK_MODEL`          | *(SDK default, `jev-latest`)* | TypeSafe model override — TypeSafe provider only, ignored on Cloudflare |
 | `GUESSWORK_DEBUG_LOG`      | *(unset)* | When set, every request/response is appended to this file         |
+
+Which provider is used is decided by which credentials are set (`TYPESAFE_API_KEY`
+takes priority if both happen to be set) — see [Choose a provider](#choose-a-provider).
 
 ## How it works
 
@@ -137,11 +183,12 @@ history parsing are ~0.1s).
 ## What it costs
 
 Every request is small: your typed prefix plus ~100 short command strings in,
-a probability distribution over ~100 IDs out. TypeSafe prices Jev input at
-**$42 per billion tokens** ([typesafe.ai](https://typesafe.ai)) and publishes
-**$0.000081 per request** as a representative cost for this kind of
-classification task — about 245x cheaper than routing the same request
-through a general-purpose chat model.
+a probability distribution over ~100 IDs out. Both providers price Jev input
+at **$42 per billion tokens** ([typesafe.ai](https://typesafe.ai),
+[Cloudflare's model card](https://dash.cloudflare.com)), and TypeSafe
+separately publishes **$0.000081 per request** as a representative cost for
+this kind of classification task — about 245x cheaper than routing the same
+request through a general-purpose chat model.
 
 A single suggestion costs a fraction of a cent; a hundred of them in one
 heavy coding day is still under a penny. Even typing enough to trigger a few

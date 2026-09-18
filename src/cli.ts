@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { TypeSafeClient } from "@typesafe-ai/sdk";
+import { cloudflareFetch } from "./cloudflare.ts";
 import { readHistoryFile, recentCommands } from "./history.ts";
 import { pickSuggestion, suggest, type Gates, type Suggestion } from "./suggest.ts";
 
@@ -35,7 +36,8 @@ Default output (consumed by the zsh plugin) is empty when there is nothing to
 suggest, otherwise a header line "<score> <has_completion> <prefix|replace>"
 followed by the suggested command, which may span several lines.
 
-Requires TYPESAFE_API_KEY in the environment.`;
+Requires either TYPESAFE_API_KEY, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN,
+in the environment. Run \`node src/setup.ts\` to configure one interactively.`;
 
 function main(): Promise<number> {
   const { values } = parseArgs({
@@ -65,8 +67,11 @@ function main(): Promise<number> {
     process.stderr.write("guesswork-suggest: --buffer is required (see --help)\n");
     return Promise.resolve(2);
   }
-  if (!process.env.TYPESAFE_API_KEY) {
-    process.stderr.write("guesswork-suggest: TYPESAFE_API_KEY is not set\n");
+  if (!hasCredentials()) {
+    process.stderr.write(
+      "guesswork-suggest: no credentials set (need TYPESAFE_API_KEY, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN)\n" +
+        "run the setup wizard: node src/setup.ts\n",
+    );
     return Promise.resolve(2);
   }
 
@@ -104,8 +109,35 @@ interface RunOptions {
   list: number | undefined;
 }
 
+function hasCredentials(): boolean {
+  return Boolean(
+    process.env.TYPESAFE_API_KEY || (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN),
+  );
+}
+
+/**
+ * Direct TypeSafe access takes priority when both are configured. Cloudflare
+ * hosts the same model behind a different transport (see cloudflare.ts), so
+ * everything downstream — retries, timeouts, request/response shape — stays
+ * identical either way.
+ */
+function buildClient(timeoutMs: number): TypeSafeClient {
+  if (process.env.TYPESAFE_API_KEY) {
+    return new TypeSafeClient({ timeout: timeoutMs, logLevel: "error" });
+  }
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID!;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN!;
+  return new TypeSafeClient({
+    apiKey: apiToken,
+    baseURL: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai`,
+    timeout: timeoutMs,
+    logLevel: "error",
+    fetch: cloudflareFetch({ accountId, apiToken }),
+  });
+}
+
 async function run(o: RunOptions): Promise<number> {
-  const client = new TypeSafeClient({ timeout: o.timeoutMs, logLevel: "error" });
+  const client = buildClient(o.timeoutMs);
   const started = performance.now();
   const result = await suggest(client, o.typed, o.commands, {
     prefixFilter: o.prefixFilter,

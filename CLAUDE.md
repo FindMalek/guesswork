@@ -5,23 +5,39 @@ prefix matching. See README.md for how it works.
 
 ## Setting this up for a user
 
-Run the installer, non-interactively, in one shot:
+There are two providers for the underlying model (same model, same request
+shape, different account/billing): **TypeSafe** direct (`TYPESAFE_API_KEY`)
+or **Cloudflare Workers AI** (`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`).
+Ask the user which they'd rather use if they haven't said, or check what
+credentials they already have on hand.
+
+Run the installer non-interactively, in one shot, passing everything after `--`:
 
 ```sh
-TYPESAFE_API_KEY=<their key> ./install.sh
+./install.sh -- --provider typesafe --api-key sk-...
+# or
+./install.sh -- --provider cloudflare --account-id <id> --api-token <token>
 ```
 
-- If they haven't given you a key yet, ask for one (or point them to
-  https://typesafe.ai) before running the installer — don't run it without a
-  key unless they explicitly want to configure it later (`./install.sh --no-key`).
-- The installer is idempotent: safe to re-run, clones only if not already
-  present, and replaces its own block in `~/.zshrc` (between the
-  `# >>> guesswork >>>` / `# <<< guesswork <<<` markers) rather than duplicating it.
+- Don't run it without credentials unless the user explicitly wants to
+  configure them later (`./install.sh -- --provider typesafe --api-key '' --skip-test`
+  isn't a real path — just skip running it at all until they have a key, or
+  point them at `npm run setup` to run the interactive wizard themselves).
+- The wizard makes one live request to verify the credentials actually work
+  before writing anything; a failure prints the real error message.
+- Both the installer and the wizard (`src/setup.ts`) are idempotent: safe to
+  re-run, clone/pull only if needed, and replace their own block in
+  `~/.zshrc` (between the `# >>> guesswork >>>` / `# <<< guesswork <<<`
+  markers) rather than duplicating it. Re-running with a different
+  `--provider` cleanly switches.
 - After it finishes, tell the user to run `exec zsh` or open a new terminal —
   don't try to `source ~/.zshrc` yourself on their behalf from a non-interactive
   shell, it won't affect their actual terminal session.
 - Node 22+ and zsh 5.9+ are hard requirements; the installer checks both and
   fails with a clear message if they're missing.
+- The plugin only works in zsh — it hooks zle directly. If the user's
+  `$SHELL` isn't zsh, the wizard still writes the config but warns them they
+  need to actually run zsh to see suggestions.
 
 ## Development
 
