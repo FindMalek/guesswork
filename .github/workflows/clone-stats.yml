@@ -3,6 +3,13 @@ name: Clone Stats
 # Snapshots the GitHub Traffic API's rolling 14-day clone count into a
 # persisted history file and refreshes the README badge with the running
 # lifetime total. See scripts/update-clone-stats.sh and #5.
+#
+# Requires a PROJECT_TOKEN secret (a classic PAT with `repo` scope; the same
+# one used by project-review-status.yml, which needs `project` scope too --
+# one PAT with both covers both workflows). The default GITHUB_TOKEN can't
+# read the Traffic API even for the repo it's running in -- confirmed
+# empirically: "Resource not accessible by integration" (HTTP 403), not just
+# a docs claim.
 
 on:
   schedule:
@@ -15,16 +22,25 @@ permissions:
 jobs:
   clone-stats:
     runs-on: ubuntu-latest
+    env:
+      HAS_TOKEN: ${{ secrets.PROJECT_TOKEN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
 
       - name: Update clone stats
+        if: env.HAS_TOKEN == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
         run: ./scripts/update-clone-stats.sh ${{ github.repository }}
 
+      - name: Skip (no PROJECT_TOKEN secret configured)
+        if: env.HAS_TOKEN != 'true'
+        run: echo "::warning::PROJECT_TOKEN secret not set -- skipping clone stats update. See #2/#5."
+
       - name: Commit if changed
+        if: env.HAS_TOKEN == 'true'
         run: |
           if git diff --quiet -- README.md .github/clone-history.json; then
             echo "No stats change, skipping commit."

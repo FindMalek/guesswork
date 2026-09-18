@@ -18,18 +18,25 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+    env:
+      HAS_TOKEN: ${{ secrets.PROJECT_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == 'true'
 
       - name: Changes requested -> In progress
-        if: github.event.review.state == 'changes_requested'
+        if: github.event.review.state == 'changes_requested' && env.HAS_TOKEN == 'true'
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
         run: ./scripts/gh-project-status-for-pr.sh ${{ github.event.pull_request.number }} "In progress"
 
       - name: Approved -> In review
-        if: github.event.review.state == 'approved'
+        if: github.event.review.state == 'approved' && env.HAS_TOKEN == 'true'
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
         run: ./scripts/gh-project-status-for-pr.sh ${{ github.event.pull_request.number }} "In review"
+
+      - name: Skip (no PROJECT_TOKEN secret configured)
+        if: env.HAS_TOKEN != 'true'
+        run: echo "::warning::PROJECT_TOKEN secret not set -- skipping project status sync. See #2."
