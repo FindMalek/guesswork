@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question
+    url: https://github.com/findmalek/guesswork/discussions
+    about: Ask a question or start a discussion (enable Discussions on the repo, or open a blank issue if it isn't enabled yet).

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm test
+      - name: shell syntax check
+        run: |
+          bash -n install.sh
+          zsh -n zsh/guesswork.plugin.zsh
+          zsh -n test/e2e.zsh
+
+  # The real end-to-end test drives an interactive zsh against a live provider
+  # and needs a paid API key, so it only runs on pushes to main (never on PRs,
+  # which may come from forks without access to the secret) and only if a
+  # TYPESAFE_API_KEY secret has actually been added to the repo. Add one under
+  # Settings → Secrets and variables → Actions to enable it; costs are tiny
+  # (see the README's "What it costs" section) but real.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run test:e2e
+        if: env.TYPESAFE_API_KEY != ''

@@ -3,6 +3,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/findmalek/guesswork/actions/workflows/ci.yml"><img src="https://shieldcn.dev/github/ci/findmalek/guesswork.svg?workflow=CI&variant=secondary" alt="CI" /></a>
   <a href="https://github.com/findmalek/guesswork/blob/main/LICENSE"><img src="https://shieldcn.dev/github/license/findmalek/guesswork.svg?variant=secondary" alt="License" /></a>
   <a href="https://github.com/findmalek/guesswork/commits/main"><img src="https://shieldcn.dev/github/last-commit/findmalek/guesswork.svg?variant=secondary" alt="Last commit" /></a>
   <a href="https://nodejs.org"><img src="https://shieldcn.dev/badge/node-22%2B-339933.svg?logo=nodedotjs&logoColor=white&variant=secondary" alt="Node 22+" /></a>
@@ -117,7 +118,7 @@ whichever is more convenient for you to bill and authenticate through.
 | --- | --- | --- |
 | Input price | $42 / billion tokens | $42 / billion tokens ($0.042 / million) |
 | Context length | not published | 32,000 tokens |
-| Credentials | one API key from [typesafe.ai](https://typesafe.ai) | an [account ID](https://dash.cloudflare.com) + an [API token](https://dash.cloudflare.com/profile/api-tokens) scoped to Workers AI |
+| Credentials | one API key from [typesafe.ai](https://typesafe.ai) | an [account ID + API token](#finding-your-cloudflare-account-id-and-api-token) scoped to Workers AI |
 | Billed through | TypeSafe | Cloudflare |
 | Env vars | `TYPESAFE_API_KEY` | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` |
 
@@ -127,6 +128,23 @@ price, and output for this task is a short probability distribution, not
 prose, so it's a small fraction of the bill either way. If you already have a
 Cloudflare account, that's usually the path of least friction; if you'd
 rather not add another vendor, TypeSafe direct is one less account.
+
+### Finding your Cloudflare Account ID and API Token
+
+If you pick Cloudflare, the wizard asks for two things that are easy to miss
+on first look:
+
+- **Account ID** — open [dash.cloudflare.com](https://dash.cloudflare.com)
+  and pick an account. The Account ID is the 32-character hex string right
+  after `dash.cloudflare.com/` in your browser's URL bar (e.g.
+  `dash.cloudflare.com/1a2b3c4d5e6f.../...`) — copy that segment. It's also
+  shown under **Workers & Pages → Overview**, top right corner, next to a
+  copy-to-clipboard icon, if you'd rather not read it out of the URL.
+- **API Token** — go to
+  [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens)
+  → **Create Token** → **Custom Token** → add the **Workers AI** permission
+  (Read is enough) scoped to your account → **Continue** → **Create Token**.
+  Copy it immediately; Cloudflare only shows it once.
 
 ## Configuration
 

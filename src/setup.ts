@@ -138,8 +138,13 @@ async function collectCredentials(provider: Provider, args: Args, tty: boolean):
       process.exit(2);
     }
     p.note(
-      "Find your Account ID in the Cloudflare dashboard sidebar.\n" +
-        "Create a token with Workers AI access at https://dash.cloudflare.com/profile/api-tokens",
+      "Account ID: open https://dash.cloudflare.com — it's the 32-character\n" +
+        "code right after \"dash.cloudflare.com/\" in the URL bar once you've\n" +
+        "picked an account (also shown under Workers & Pages → Overview, top\n" +
+        "right, with a copy-to-clipboard button next to it).\n\n" +
+        "API Token: https://dash.cloudflare.com/profile/api-tokens → Create\n" +
+        "Token → Custom Token → give it \"Workers AI: Read\" (or Edit) at the\n" +
+        "Account level → Continue → Create Token. Copy it now, it's shown once.",
       "Cloudflare",
     );
     accountId ??= exitOnCancel(
