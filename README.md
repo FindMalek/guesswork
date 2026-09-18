@@ -13,8 +13,12 @@
 
 <p align="center">
 <!-- clone-stats:start -->
-[![clones](https://shieldcn.dev/badge/clones-0-4c1.svg?variant=secondary)](https://github.com/FindMalek/guesswork)
+[![installs (approx)](https://shieldcn.dev/badge/installs%20(approx)-0-4c1.svg?variant=secondary)](https://github.com/FindMalek/guesswork)
 <!-- clone-stats:end -->
+</p>
+
+<p align="center">
+<sub>Counts real <code>git clone</code>s of this repo — every first-time <code>install.sh</code> run does one internally, plus some people who clone without installing, so treat it as a close proxy, not a byte-exact install count.</sub>
 </p>
 
 Prefix-matching history search has a blind spot: it only works if you remember
