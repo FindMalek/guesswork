@@ -7,6 +7,7 @@
     "typecheck": "tsc -p .",
     "suggest": "node src/cli.ts",
     "setup": "node src/setup.ts",
+    "sync-repo": "chmod +x scripts/sync-repo.sh && scripts/sync-repo.sh",
     "test:e2e": "zsh test/e2e.zsh"
   },
   "license": "MIT",

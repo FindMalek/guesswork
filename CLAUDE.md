@@ -63,6 +63,7 @@ curl -fsSL https://guesswork.findmalek.com/install.sh | bash -s -- --provider ty
 - `npm test` — unit tests
 - `npm run typecheck`
 - `npm run test:e2e` — drives a real zsh in a pty; needs a provider's credentials (any of the four)
+- `npm run sync-repo` — fetches origin, checks out and pulls `main`, deletes every other local branch, and prunes stale remote-tracking refs. Matches `findmalek/dukkani` and `findmalek/sonaraem`'s convention; useful after a PR merges on GitHub since branches created via `gh issue develop` otherwise pile up locally.
 - Env vars are `GUESSWORK_*` (see README's Configuration table), not `JEV_*`
   — this project was rebranded from `jev-shell-history` but still runs on
   TypeSafe's Jev model under the hood, so "Jev" still refers to the model
