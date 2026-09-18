@@ -11,6 +11,12 @@
   <a href="https://www.typescriptlang.org"><img src="https://shieldcn.dev/badge/made%20with-typescript-3178C6.svg?logo=typescript&logoColor=white&variant=secondary" alt="Made with TypeScript" /></a>
 </p>
 
+<p align="center">
+<!-- clone-stats:start -->
+[![clones](https://shieldcn.dev/badge/clones-0-4c1.svg?variant=secondary)](https://github.com/findmalek/guesswork)
+<!-- clone-stats:end -->
+</p>
+
 Prefix-matching history search has a blind spot: it only works if you remember
 how the command *started*. You know you ran something with `--dir blog` in it
 last week, but you don't remember whether it began with `amp`, `npm`, or `git`.
@@ -39,8 +45,15 @@ ranking understands intent instead of only comparing characters.
 
 ## Install
 
-One-liner (clones the repo, installs dependencies, and launches an
-arrow-key setup wizard):
+```sh
+curl -fsSL https://guesswork.findmalek.com/install.sh | bash
+```
+
+That fetches [`install.sh`](./install.sh) straight from this repo (the URL is
+just a friendlier alias — no separate service, nothing else to trust) and
+runs it: it clones the repo to `~/.zsh/guesswork`, installs dependencies, and
+launches an arrow-key setup wizard. Equivalent, if you'd rather clone by hand
+first and see what you're running before it runs:
 
 ```sh
 git clone https://github.com/findmalek/guesswork.git ~/.zsh/guesswork

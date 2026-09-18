@@ -1,18 +1,24 @@
-## What & why
+## 🧠 Overview
+<!-- Briefly describe what this PR does and why -->
 
-<!-- What does this change, and what problem does it solve? -->
+Closes #
 
-## How to verify
+---
 
-<!-- Commands you ran, or steps to reproduce the behavior manually. -->
+## ✅ Pre-merge Checklist
 
-```sh
-npm test
-npm run typecheck
-```
+### Code Quality
+- [ ] Self-reviewed the code thoroughly
+- [ ] Follows project conventions (`CLAUDE.md`)
+- [ ] `npm run typecheck` passes
+- [ ] `npm test` passes
 
-## Checklist
+### Testing
+- [ ] Tested the changed feature end-to-end locally
+- [ ] Verified no regressions in adjacent features
+- [ ] Touched `zsh/guesswork.plugin.zsh`, `install.sh`, or `src/setup.ts`? Ran `zsh -n zsh/guesswork.plugin.zsh` and, ideally, `npm run test:e2e` locally (needs a real provider key — CI can't run this)
 
-- [ ] `npm test` and `npm run typecheck` pass
-- [ ] Touched `zsh/guesswork.plugin.zsh`? Ran `zsh -n zsh/guesswork.plugin.zsh` and, ideally, `npm run test:e2e` locally (needs a real provider key — CI can't run this)
-- [ ] Updated the README/CLAUDE.md if behavior, flags, or env vars changed
+---
+
+## 🔍 Additional Notes
+<!-- Anything reviewers should be aware of — breaking changes, migrations needed, follow-up issues -->

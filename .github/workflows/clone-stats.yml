@@ -1,0 +1,37 @@
+name: Clone Stats
+
+# Snapshots the GitHub Traffic API's rolling 14-day clone count into a
+# persisted history file and refreshes the README badge with the running
+# lifetime total. See scripts/update-clone-stats.sh and #5.
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  clone-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update clone stats
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/update-clone-stats.sh ${{ github.repository }}
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- README.md .github/clone-history.json; then
+            echo "No stats change, skipping commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md .github/clone-history.json
+          git commit -m "chore: refresh clone stats" -m "Co-Authored-By: FindMalek <hi@findmalek.com>"
+          git push

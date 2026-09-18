@@ -11,12 +11,18 @@ or **Cloudflare Workers AI** (`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`).
 Ask the user which they'd rather use if they haven't said, or check what
 credentials they already have on hand.
 
-Run the installer non-interactively, in one shot, passing everything after `--`:
+Run the installer non-interactively, in one shot, passing everything after `--`.
+From an existing checkout, `./install.sh -- ...`; from scratch (nothing cloned
+yet), the same install.sh is mirrored at guesswork.findmalek.com via GitHub
+Pages (see `CNAME`) so `curl ... | bash -s -- ...` works too — bash's `-s --`
+passes args through to a piped script the same way:
 
 ```sh
 ./install.sh -- --provider typesafe --api-key sk-...
 # or
 ./install.sh -- --provider cloudflare --account-id <id> --api-token <token>
+# or, with nothing cloned yet:
+curl -fsSL https://guesswork.findmalek.com/install.sh | bash -s -- --provider typesafe --api-key sk-...
 ```
 
 - Don't run it without credentials unless the user explicitly wants to
