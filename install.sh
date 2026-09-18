@@ -61,4 +61,7 @@ info "installing dependencies"
 # ------------------------------------------------------------------ setup -
 
 info "launching setup"
-exec node "$INSTALL_DIR/src/setup.ts" "${SETUP_ARGS[@]}"
+# The guard form (${arr[@]+"${arr[@]}"}) is needed for macOS's default bash
+# (3.2): older bash treats expanding an empty array under `set -u` as an
+# unbound variable, which "${SETUP_ARGS[@]}" alone would trip.
+exec node "$INSTALL_DIR/src/setup.ts" "${SETUP_ARGS[@]+"${SETUP_ARGS[@]}"}"
