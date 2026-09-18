@@ -5,11 +5,16 @@ prefix matching. See README.md for how it works.
 
 ## Setting this up for a user
 
-There are two providers for the underlying model (same model, same request
-shape, different account/billing): **TypeSafe** direct (`TYPESAFE_API_KEY`)
-or **Cloudflare Workers AI** (`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`).
-Ask the user which they'd rather use if they haven't said, or check what
-credentials they already have on hand.
+There are three providers: **TypeSafe** direct (`TYPESAFE_API_KEY`) and
+**Cloudflare Workers AI** (`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`)
+both run the real Jev model, same request shape, different account/billing.
+**Anthropic** (`ANTHROPIC_API_KEY`) is a fallback for when the user doesn't
+want either account at all — it substitutes a real Claude model for Jev, not
+Jev itself (see #1 and the README's "Choose a provider" for why). Default to
+TypeSafe or Cloudflare unless the user specifically doesn't want a TypeSafe
+or Cloudflare account, or already has an Anthropic key on hand and wants the
+fastest path. Ask which they'd rather use if they haven't said, or check what
+credentials they already have.
 
 Run the installer non-interactively, in one shot, passing everything after `--`.
 From an existing checkout, `./install.sh -- ...`; from scratch (nothing cloned
@@ -21,6 +26,8 @@ passes args through to a piped script the same way:
 ./install.sh -- --provider typesafe --api-key sk-...
 # or
 ./install.sh -- --provider cloudflare --account-id <id> --api-token <token>
+# or
+./install.sh -- --provider anthropic --api-key sk-ant-...
 # or, with nothing cloned yet:
 curl -fsSL https://guesswork.findmalek.com/install.sh | bash -s -- --provider typesafe --api-key sk-...
 ```
@@ -49,7 +56,7 @@ curl -fsSL https://guesswork.findmalek.com/install.sh | bash -s -- --provider ty
 
 - `npm test` — unit tests
 - `npm run typecheck`
-- `npm run test:e2e` — drives a real zsh in a pty; needs `TYPESAFE_API_KEY`
+- `npm run test:e2e` — drives a real zsh in a pty; needs a provider's credentials (any of the three)
 - Env vars are `GUESSWORK_*` (see README's Configuration table), not `JEV_*`
   — this project was rebranded from `jev-shell-history` but still runs on
   TypeSafe's Jev model under the hood, so "Jev" still refers to the model

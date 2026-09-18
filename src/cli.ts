@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { TypeSafeClient } from "@typesafe-ai/sdk";
+import { anthropicFetch } from "./anthropic.ts";
 import { cloudflareFetch } from "./cloudflare.ts";
 import { readHistoryFile, recentCommands } from "./history.ts";
 import { pickSuggestion, suggest, type Gates, type Suggestion } from "./suggest.ts";
@@ -20,7 +21,7 @@ Options:
       --min-score <p>     Fuzzy mode: min score of the top candidate to suggest (default: 0.3)
       --strong-score <p>  Fuzzy mode: a top score this high overrides --threshold (default: 0.9)
       --jev-only          Never narrow to literal prefix matches; Jev ranks all entries
-      --model <name>      TypeSafe model (default: SDK default, jev-latest)
+      --model <name>      Model override (TypeSafe: Jev version, ignored on Cloudflare; Anthropic: Claude model)
       --timeout <ms>      Request timeout per attempt (default: 8000)
       --json              Print the full ranked result as JSON
       --list [n]          Print the top n candidates with scores (default: 10)
@@ -36,8 +37,10 @@ Default output (consumed by the zsh plugin) is empty when there is nothing to
 suggest, otherwise a header line "<score> <has_completion> <prefix|replace>"
 followed by the suggested command, which may span several lines.
 
-Requires either TYPESAFE_API_KEY, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN,
-in the environment. Run \`node src/setup.ts\` to configure one interactively.`;
+Requires one of: TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN,
+or ANTHROPIC_API_KEY (a fallback that substitutes a real Claude model for Jev,
+not Jev itself — see the README). Run \`node src/setup.ts\` to configure one
+interactively.`;
 
 function main(): Promise<number> {
   const { values } = parseArgs({
@@ -69,7 +72,7 @@ function main(): Promise<number> {
   }
   if (!hasCredentials()) {
     process.stderr.write(
-      "guesswork-suggest: no credentials set (need TYPESAFE_API_KEY, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN)\n" +
+      "guesswork-suggest: no credentials set (need TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN, or ANTHROPIC_API_KEY)\n" +
         "run the setup wizard: node src/setup.ts\n",
     );
     return Promise.resolve(2);
@@ -111,28 +114,42 @@ interface RunOptions {
 
 function hasCredentials(): boolean {
   return Boolean(
-    process.env.TYPESAFE_API_KEY || (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN),
+    process.env.TYPESAFE_API_KEY ||
+      (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) ||
+      process.env.ANTHROPIC_API_KEY,
   );
 }
 
 /**
- * Direct TypeSafe access takes priority when both are configured. Cloudflare
- * hosts the same model behind a different transport (see cloudflare.ts), so
- * everything downstream — retries, timeouts, request/response shape — stays
- * identical either way.
+ * Direct TypeSafe access takes priority, then Cloudflare, then Anthropic.
+ * Cloudflare hosts the same Jev model behind a different transport (see
+ * cloudflare.ts); Anthropic substitutes a real Claude model doing the same
+ * structured evaluation task instead of Jev itself (see anthropic.ts, #1) —
+ * a fallback for people who'd rather not create a TypeSafe or Cloudflare
+ * account, not an equivalent model.
  */
 function buildClient(timeoutMs: number): TypeSafeClient {
   if (process.env.TYPESAFE_API_KEY) {
     return new TypeSafeClient({ timeout: timeoutMs, logLevel: "error" });
   }
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID!;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN!;
+  if (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) {
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+    return new TypeSafeClient({
+      apiKey: apiToken,
+      baseURL: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai`,
+      timeout: timeoutMs,
+      logLevel: "error",
+      fetch: cloudflareFetch({ accountId, apiToken }),
+    });
+  }
+  const apiKey = process.env.ANTHROPIC_API_KEY!;
   return new TypeSafeClient({
-    apiKey: apiToken,
-    baseURL: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai`,
+    apiKey,
+    baseURL: "https://api.anthropic.com",
     timeout: timeoutMs,
     logLevel: "error",
-    fetch: cloudflareFetch({ accountId, apiToken }),
+    fetch: anthropicFetch({ apiKey }),
   });
 }
 

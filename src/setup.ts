@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { noul, TypeSafeClient } from "@typesafe-ai/sdk";
 import * as p from "@clack/prompts";
+import { anthropicFetch } from "./anthropic.ts";
 import { cloudflareFetch } from "./cloudflare.ts";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -25,8 +26,8 @@ below pre-fills that step (so e.g. --provider alone still prompts for
 credentials interactively). Without a TTY, every needed option must be
 passed — there's nothing to prompt into.
 
-  --provider <typesafe|cloudflare>
-  --api-key <key>                  TypeSafe: your TYPESAFE_API_KEY
+  --provider <typesafe|cloudflare|anthropic>
+  --api-key <key>                  TypeSafe: your TYPESAFE_API_KEY; Anthropic: your ANTHROPIC_API_KEY
   --account-id <id>                Cloudflare: your account ID
   --api-token <token>              Cloudflare: an API token with Workers AI access
   --rc <path>                      Shell rc file to edit (default: $ZDOTDIR/.zshrc or ~/.zshrc)
@@ -74,11 +75,11 @@ function parseCliArgs(): Args {
 
 // ------------------------------------------------------------- providers --
 
-type Provider = "typesafe" | "cloudflare";
+type Provider = "typesafe" | "cloudflare" | "anthropic";
 
 interface Credentials {
   provider: Provider;
-  apiKey: string | undefined; // typesafe
+  apiKey: string | undefined; // typesafe, anthropic
   accountId: string | undefined; // cloudflare
   apiToken: string | undefined; // cloudflare
 }
@@ -92,13 +93,15 @@ function exitOnCancel<T>(value: T | typeof p.CANCEL_SYMBOL): T {
 }
 
 async function pickProvider(args: Args, tty: boolean): Promise<Provider> {
-  if (args.provider === "typesafe" || args.provider === "cloudflare") return args.provider;
+  if (args.provider === "typesafe" || args.provider === "cloudflare" || args.provider === "anthropic") {
+    return args.provider;
+  }
   if (args.provider) {
-    console.error(`unknown --provider "${args.provider}"; expected "typesafe" or "cloudflare"`);
+    console.error(`unknown --provider "${args.provider}"; expected "typesafe", "cloudflare", or "anthropic"`);
     process.exit(2);
   }
   if (!tty) {
-    console.error("no TTY and no --provider given; pass --provider typesafe|cloudflare (see --help)");
+    console.error("no TTY and no --provider given; pass --provider typesafe|cloudflare|anthropic (see --help)");
     process.exit(2);
   }
   return exitOnCancel(
@@ -107,6 +110,11 @@ async function pickProvider(args: Args, tty: boolean): Promise<Provider> {
       options: [
         { value: "typesafe", label: "TypeSafe", hint: "direct — typesafe.ai" },
         { value: "cloudflare", label: "Cloudflare Workers AI", hint: "same model, billed through Cloudflare" },
+        {
+          value: "anthropic",
+          label: "Anthropic (Claude)",
+          hint: "fallback: a real Claude model standing in for Jev, not Jev itself",
+        },
       ],
     }),
   );
@@ -123,6 +131,29 @@ async function collectCredentials(provider: Provider, args: Args, tty: boolean):
       apiKey = exitOnCancel(
         await p.password({
           message: "Paste your TYPESAFE_API_KEY (get one at https://typesafe.ai)",
+          validate: (v) => (v ? undefined : "an API key is required"),
+        }),
+      );
+    }
+    return { provider, apiKey, accountId: undefined, apiToken: undefined };
+  }
+
+  if (provider === "anthropic") {
+    let apiKey = args.apiKey;
+    if (!apiKey) {
+      if (!tty) {
+        console.error("no TTY and no --api-key given (see --help)");
+        process.exit(2);
+      }
+      p.note(
+        "This runs a real Claude model in place of Jev, not Jev itself — a\n" +
+          "fallback for when you'd rather not sign up for TypeSafe or Cloudflare.\n" +
+          "Get a key at https://console.anthropic.com/settings/keys",
+        "Anthropic",
+      );
+      apiKey = exitOnCancel(
+        await p.password({
+          message: "Paste your ANTHROPIC_API_KEY",
           validate: (v) => (v ? undefined : "an API key is required"),
         }),
       );
@@ -161,6 +192,16 @@ function buildClient(creds: Credentials): TypeSafeClient {
   if (creds.provider === "typesafe") {
     // Validated non-empty in collectCredentials.
     return new TypeSafeClient({ apiKey: creds.apiKey!, timeout: 8000, logLevel: "error" });
+  }
+  if (creds.provider === "anthropic") {
+    const apiKey = creds.apiKey!;
+    return new TypeSafeClient({
+      apiKey,
+      baseURL: "https://api.anthropic.com",
+      timeout: 8000,
+      logLevel: "error",
+      fetch: anthropicFetch({ apiKey }),
+    });
   }
   const { accountId, apiToken } = creds as { accountId: string; apiToken: string };
   return new TypeSafeClient({
@@ -265,7 +306,9 @@ async function main(): Promise<void> {
   const exportLines =
     creds.provider === "typesafe"
       ? [`export TYPESAFE_API_KEY=${creds.apiKey}`]
-      : [`export CLOUDFLARE_ACCOUNT_ID=${creds.accountId}`, `export CLOUDFLARE_API_TOKEN=${creds.apiToken}`];
+      : creds.provider === "anthropic"
+        ? [`export ANTHROPIC_API_KEY=${creds.apiKey}`]
+        : [`export CLOUDFLARE_ACCOUNT_ID=${creds.accountId}`, `export CLOUDFLARE_API_TOKEN=${creds.apiToken}`];
   writeBlock(path, [...exportLines, `source "${join(REPO_ROOT, "zsh/guesswork.plugin.zsh")}"`]);
 
   if (tty) {
