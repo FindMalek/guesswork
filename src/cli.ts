@@ -2,11 +2,13 @@
 import { parseArgs } from "node:util";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { TypeSafeClient } from "@typesafe-ai/sdk";
 import { anthropicFetch } from "./anthropic.ts";
 import { cloudflareFetch } from "./cloudflare.ts";
 import { readHistoryFile, recentCommands } from "./history.ts";
-import { pickSuggestion, suggest, type Gates, type Suggestion } from "./suggest.ts";
+import { projectScriptCandidates } from "./project-scripts.ts";
+import { pickSuggestion, selectCandidates, suggest, type Gates, type Suggestion } from "./suggest.ts";
 
 const HELP = `guesswork-suggest: rank recent zsh history entries as completions for typed text
 
@@ -25,6 +27,8 @@ Options:
       --timeout <ms>      Request timeout per attempt (default: 8000)
       --json              Print the full ranked result as JSON
       --list [n]          Print the top n candidates with scores (default: 10)
+      --list-candidates   Print the candidate list that would be sent, then exit
+                           (no network request, no credentials required)
   -h, --help
 
 When some history entries start with the typed text ("prefix mode"), only those
@@ -33,9 +37,17 @@ are sent to Jev for ranking and the top one is always suggested. Otherwise
 the top score is at least --min-score and either has_completion is at least
 --threshold or the top score is at least --strong-score.
 
+Besides shell history, candidates also include commands you've never actually
+run: package.json scripts (as \`npm run <name>\` / \`pnpm <name>\` / \`yarn <name>\`
+/ \`bun run <name>\`, detected from the package.json's own "packageManager"
+field or the nearest lockfile) and Makefile targets (as \`make <target>\`), read
+from the nearest ancestor of the current directory that has either file. Set
+GUESSWORK_PROJECT_SCRIPTS=0 to turn this off.
+
 Default output (consumed by the zsh plugin) is empty when there is nothing to
-suggest, otherwise a header line "<score> <has_completion> <prefix|replace>"
-followed by the suggested command, which may span several lines.
+suggest, otherwise a header line "<score> <has_completion> <prefix|replace|script>"
+followed by the suggested command, which may span several lines. "script" means
+the command came from package.json/Makefile, not something you've actually run.
 
 Requires one of: TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN,
 or ANTHROPIC_API_KEY (a fallback that substitutes a real Claude model for Jev,
@@ -57,6 +69,7 @@ function main(): Promise<number> {
       timeout: { type: "string", default: "8000" },
       json: { type: "boolean", default: false },
       list: { type: "string" },
+      "list-candidates": { type: "boolean", default: false },
       help: { type: "boolean", short: "h", default: false },
     },
     allowPositionals: false,
@@ -70,6 +83,34 @@ function main(): Promise<number> {
     process.stderr.write("guesswork-suggest: --buffer is required (see --help)\n");
     return Promise.resolve(2);
   }
+
+  const typed = values.buffer;
+  const historyPath = values.history ?? process.env.HISTFILE ?? join(homedir(), ".zsh_history");
+  const historyCommands = recentCommands(readHistoryFile(historyPath), Number(values.limit));
+
+  // Project scripts (package.json / Makefile) are additional candidates fed
+  // into the exact same pipeline as history — not a separate question type.
+  // A command already in history is dropped here so it isn't offered twice
+  // (once as something you ran, once as something you merely could run);
+  // history wins because a command you've actually typed is strictly more
+  // informative than the mere fact that it exists as a script. Scripts are
+  // appended after history, so ties in the model's ranking prompt (which
+  // prefers the lower/more-recent id) favor history when both are plausible.
+  const scripts = projectScriptsEnabled()
+    ? projectScriptCandidates(process.cwd(), { exclude: new Set(historyCommands) })
+    : [];
+  const scriptCommands = new Set(scripts.map((s) => s.command));
+  const commands = [...historyCommands, ...scripts.map((s) => s.command)];
+
+  if (values["list-candidates"]) {
+    const { mode, candidates } = selectCandidates(typed, commands, { prefixFilter: !values["jev-only"] });
+    process.stdout.write(`typed: ${JSON.stringify(typed)}  mode: ${mode}  candidates: ${candidates.length}\n`);
+    for (const c of candidates) {
+      process.stdout.write(`  ${c.id}  ${scriptCommands.has(c.command) ? "[script] " : "[history]"}  ${oneLine(c.command)}\n`);
+    }
+    return Promise.resolve(0);
+  }
+
   if (!hasCredentials()) {
     process.stderr.write(
       "guesswork-suggest: no credentials set (need TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN, or ANTHROPIC_API_KEY)\n" +
@@ -78,16 +119,13 @@ function main(): Promise<number> {
     return Promise.resolve(2);
   }
 
-  const typed = values.buffer;
   const minChars = Number(values["min-chars"]);
   if (typed.trim().length < minChars) return Promise.resolve(0);
-
-  const historyPath = values.history ?? process.env.HISTFILE ?? join(homedir(), ".zsh_history");
-  const commands = recentCommands(readHistoryFile(historyPath), Number(values.limit));
 
   return run({
     typed,
     commands,
+    scriptCommands,
     gates: {
       threshold: Number(values.threshold),
       minScore: Number(values["min-score"]),
@@ -101,9 +139,27 @@ function main(): Promise<number> {
   });
 }
 
+/**
+ * GUESSWORK_PROJECT_SCRIPTS=0 opts out. This is a per-invocation feature: each
+ * keystroke starts a fresh `cli.ts` process (see zsh/guesswork.plugin.zsh), so
+ * there's no persistent daemon to cache across invocations — every request
+ * that enables this does one extra directory walk plus, at most, one
+ * package.json read and one Makefile read (never both re-read twice within a
+ * single run; see project-scripts.ts). That's cheap relative to the network
+ * round-trip this CLI already makes, but the env var exists for anyone who
+ * still notices latency, or who simply doesn't want their scripts suggested.
+ * A real cross-invocation cache (e.g. a small file under mtime-based
+ * invalidation) is a reasonable follow-up if this ever shows up in profiling
+ * — deliberately not built here to avoid caching something unmeasured.
+ */
+function projectScriptsEnabled(): boolean {
+  return process.env.GUESSWORK_PROJECT_SCRIPTS !== "0";
+}
+
 interface RunOptions {
   typed: string;
   commands: string[];
+  scriptCommands: ReadonlySet<string>;
   gates: Gates;
   prefixFilter: boolean;
   model: string | undefined;
@@ -191,18 +247,33 @@ async function run(o: RunOptions): Promise<number> {
         `${result.usage.input_tokens}in/${result.usage.output_tokens}out\n`,
     );
     for (const s of result.ranked.slice(0, o.list)) {
-      process.stdout.write(`  ${s.score.toFixed(3)}  ${s.isPrefix ? "prefix " : "replace"}  ${oneLine(s.command)}\n`);
+      process.stdout.write(`  ${s.score.toFixed(3)}  ${suggestionKind(s, o.scriptCommands).padEnd(7)}  ${oneLine(s.command)}\n`);
     }
     process.stdout.write(top ? `suggest: ${oneLine(top.command)}\n` : "suggest: (nothing)\n");
     return 0;
   }
 
-  if (top) process.stdout.write(formatForShell(top, result.hasCompletion));
+  if (top) process.stdout.write(formatForShell(top, result.hasCompletion, o.scriptCommands));
   return 0;
 }
 
-export function formatForShell(s: Suggestion, hasCompletion: number): string {
-  return `${s.score.toFixed(3)} ${hasCompletion.toFixed(3)} ${s.isPrefix ? "prefix" : "replace"}\n${s.command}`;
+export type SuggestionKind = "prefix" | "replace" | "script";
+
+/**
+ * A script-sourced candidate has never actually been run by the user, unlike
+ * a history-sourced one — that's a meaningfully different trust level, so it
+ * gets its own kind rather than being folded into "replace". This takes
+ * priority over prefix/replace: whether the typed text happens to be a
+ * literal prefix of the script command doesn't change the fact that the
+ * command itself is untried.
+ */
+export function suggestionKind(s: Suggestion, scriptCommands: ReadonlySet<string>): SuggestionKind {
+  if (scriptCommands.has(s.command)) return "script";
+  return s.isPrefix ? "prefix" : "replace";
+}
+
+export function formatForShell(s: Suggestion, hasCompletion: number, scriptCommands: ReadonlySet<string> = new Set()): string {
+  return `${s.score.toFixed(3)} ${hasCompletion.toFixed(3)} ${suggestionKind(s, scriptCommands)}\n${s.command}`;
 }
 
 function oneLine(command: string): string {
@@ -210,10 +281,16 @@ function oneLine(command: string): string {
   return flat.length > 100 ? flat.slice(0, 99) + "…" : flat;
 }
 
-main().then(
-  (code) => process.exit(code),
-  (err: unknown) => {
-    process.stderr.write(`guesswork-suggest: ${err instanceof Error ? err.message : String(err)}\n`);
-    process.exit(1);
-  },
-);
+// Only run when executed directly (`node src/cli.ts ...` / the `guesswork-suggest`
+// bin), not when imported — e.g. by cli.test.ts, which exercises formatForShell()
+// and suggestionKind() without wanting a real CLI invocation (argv parsing,
+// process.exit) as a side effect of the import.
+if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().then(
+    (code) => process.exit(code),
+    (err: unknown) => {
+      process.stderr.write(`guesswork-suggest: ${err instanceof Error ? err.message : String(err)}\n`);
+      process.exit(1);
+    },
+  );
+}

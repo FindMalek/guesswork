@@ -213,6 +213,7 @@ Set these before sourcing the plugin (i.e. above the `source` line in
 | `GUESSWORK_NODE`           | `node`  | Node binary                                                         |
 | `GUESSWORK_MODEL`          | *(varies by provider)* | Model override — TypeSafe: Jev version; Anthropic: Claude model (default `claude-haiku-4-5`); ignored on Cloudflare |
 | `GUESSWORK_DEBUG_LOG`      | *(unset)* | When set, every request/response is appended to this file         |
+| `GUESSWORK_PROJECT_SCRIPTS` | `1`    | Set to `0` to stop adding `package.json`/`Makefile` commands as candidates (see below) |
 
 Which provider is used is decided by which credentials are set — TypeSafe
 takes priority, then Cloudflare, then Anthropic, if more than one happens to
@@ -229,10 +230,19 @@ started — if you kept typing past a stale request, it's silently discarded.
 `src/cli.ts` does one request per keystroke to whichever provider is configured:
 
 1. **Candidates.** The last `--limit` distinct commands are read from the
-   history file (extended format, multi-line entries supported). If any of
-   them literally start with the typed text, only those are sent (*prefix
-   mode*); otherwise all of them are (*fuzzy mode*). A single prefix match is
-   suggested immediately, with no request at all.
+   history file (extended format, multi-line entries supported). To that,
+   `src/project-scripts.ts` adds commands you haven't necessarily run before:
+   `package.json` `scripts` (as `npm run <name>` / `pnpm <name>` / `yarn
+   <name>` / `bun run <name>` — the package manager comes from the
+   package.json's own `packageManager` field if present, else from whichever
+   lockfile (`pnpm-lock.yaml` / `yarn.lock` / `bun.lockb`) is found, else
+   `npm`) and `Makefile` targets (as `make <target>`), read from the nearest
+   ancestor of the current directory that has either file. A script already
+   present in history is left out so it isn't offered twice. Set
+   `GUESSWORK_PROJECT_SCRIPTS=0` to turn this off entirely. If any candidate,
+   from either source, literally starts with the typed text, only those are
+   sent (*prefix mode*); otherwise all of them are (*fuzzy mode*). A single
+   prefix match is suggested immediately, with no request at all.
 2. **One request, two questions.** The state holds `typed_so_far` and the
    candidates as an ID-tagged list. A `Choice` over the IDs asks which one the
    user is completing (score = its probability); a `Noul` asks whether *any*
@@ -245,9 +255,17 @@ started — if you kept typing past a stale request, it's silently discarded.
    while the Noul is near zero — so both are used.
 
 Exact rules — prefix matching, dedup, thresholds — live in code; the model
-only makes the judgment call of *which* history entry fits. Latency is
-roughly 0.7–0.9s per request, almost all of it API time (Node startup and
-history parsing are ~0.1s).
+only makes the judgment call of *which* candidate fits. Latency is roughly
+0.7–0.9s per request, almost all of it API time (Node startup, history
+parsing, and project-script discovery are ~0.1s combined).
+
+A suggestion sourced from `package.json`/`Makefile` is something you've never
+actually run, unlike a history-sourced one, so `src/cli.ts` tags it `script`
+rather than `prefix`/`replace` in the header line it hands to the zsh plugin
+(`<score> <has_completion> <prefix|replace|script>`). The zsh side doesn't
+render it any differently yet, but the distinction is there for a future
+pass to style it (e.g. a different marker than `⇢`) without another
+protocol change.
 
 ## What it costs
 
