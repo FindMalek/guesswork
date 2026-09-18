@@ -13,7 +13,7 @@
 
 <p align="center">
 <!-- clone-stats:start -->
-[![clones](https://shieldcn.dev/badge/clones-0-4c1.svg?variant=secondary)](https://github.com/findmalek/guesswork)
+[![clones](https://shieldcn.dev/badge/clones-0-4c1.svg?variant=secondary)](https://github.com/FindMalek/guesswork)
 <!-- clone-stats:end -->
 </p>
 
