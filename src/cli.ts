@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { TypeSafeClient } from "@typesafe-ai/sdk";
 import { anthropicFetch } from "./anthropic.ts";
 import { cloudflareFetch } from "./cloudflare.ts";
+import { groqFetch } from "./groq.ts";
 import { readHistoryFile, recentCommands } from "./history.ts";
 import { pickSuggestion, suggest, type Gates, type Suggestion } from "./suggest.ts";
 
@@ -21,7 +22,7 @@ Options:
       --min-score <p>     Fuzzy mode: min score of the top candidate to suggest (default: 0.3)
       --strong-score <p>  Fuzzy mode: a top score this high overrides --threshold (default: 0.9)
       --jev-only          Never narrow to literal prefix matches; Jev ranks all entries
-      --model <name>      Model override (TypeSafe: Jev version, ignored on Cloudflare; Anthropic: Claude model)
+      --model <name>      Model override (TypeSafe: Jev version, ignored on Cloudflare; Anthropic/Groq: chat model)
       --timeout <ms>      Request timeout per attempt (default: 8000)
       --json              Print the full ranked result as JSON
       --list [n]          Print the top n candidates with scores (default: 10)
@@ -38,9 +39,9 @@ suggest, otherwise a header line "<score> <has_completion> <prefix|replace>"
 followed by the suggested command, which may span several lines.
 
 Requires one of: TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN,
-or ANTHROPIC_API_KEY (a fallback that substitutes a real Claude model for Jev,
-not Jev itself — see the README). Run \`node src/setup.ts\` to configure one
-interactively.`;
+ANTHROPIC_API_KEY, or GROQ_API_KEY (fallbacks that substitute a real chat model
+for Jev, not Jev itself — see the README). Run \`node src/setup.ts\` to configure
+one interactively.`;
 
 function main(): Promise<number> {
   const { values } = parseArgs({
@@ -72,7 +73,7 @@ function main(): Promise<number> {
   }
   if (!hasCredentials()) {
     process.stderr.write(
-      "guesswork-suggest: no credentials set (need TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN, or ANTHROPIC_API_KEY)\n" +
+      "guesswork-suggest: no credentials set (need TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN, ANTHROPIC_API_KEY, or GROQ_API_KEY)\n" +
         "run the setup wizard: node src/setup.ts\n",
     );
     return Promise.resolve(2);
@@ -116,17 +117,19 @@ function hasCredentials(): boolean {
   return Boolean(
     process.env.TYPESAFE_API_KEY ||
       (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) ||
-      process.env.ANTHROPIC_API_KEY,
+      process.env.ANTHROPIC_API_KEY ||
+      process.env.GROQ_API_KEY,
   );
 }
 
 /**
- * Direct TypeSafe access takes priority, then Cloudflare, then Anthropic.
- * Cloudflare hosts the same Jev model behind a different transport (see
- * cloudflare.ts); Anthropic substitutes a real Claude model doing the same
- * structured evaluation task instead of Jev itself (see anthropic.ts, #1) —
- * a fallback for people who'd rather not create a TypeSafe or Cloudflare
- * account, not an equivalent model.
+ * Direct TypeSafe access takes priority, then Cloudflare, then Anthropic,
+ * then Groq. Cloudflare hosts the same Jev model behind a different
+ * transport (see cloudflare.ts); Anthropic and Groq each substitute a real
+ * general-purpose chat model doing the same structured evaluation task
+ * instead of Jev itself (see anthropic.ts/#1 and groq.ts/#11) — fallbacks
+ * for people who'd rather not create a TypeSafe or Cloudflare account, not
+ * equivalent models.
  */
 function buildClient(timeoutMs: number): TypeSafeClient {
   if (process.env.TYPESAFE_API_KEY) {
@@ -143,13 +146,23 @@ function buildClient(timeoutMs: number): TypeSafeClient {
       fetch: cloudflareFetch({ accountId, apiToken }),
     });
   }
-  const apiKey = process.env.ANTHROPIC_API_KEY!;
+  if (process.env.ANTHROPIC_API_KEY) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    return new TypeSafeClient({
+      apiKey,
+      baseURL: "https://api.anthropic.com",
+      timeout: timeoutMs,
+      logLevel: "error",
+      fetch: anthropicFetch({ apiKey }),
+    });
+  }
+  const apiKey = process.env.GROQ_API_KEY!;
   return new TypeSafeClient({
     apiKey,
-    baseURL: "https://api.anthropic.com",
+    baseURL: "https://api.groq.com/openai/v1",
     timeout: timeoutMs,
     logLevel: "error",
-    fetch: anthropicFetch({ apiKey }),
+    fetch: groqFetch({ apiKey }),
   });
 }
 
