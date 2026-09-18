@@ -120,6 +120,26 @@ If an AI coding agent is doing this install for you, point it at
 [`CLAUDE.md`](./CLAUDE.md) — it documents the non-interactive install path so
 it can be done in one shot without back-and-forth.
 
+### Terminal support
+
+guesswork works in **any terminal emulator that runs zsh** — Ghostty, iTerm2,
+Terminal.app, Alacritty, kitty, WezTerm, tmux, all of it. This isn't a "we
+tested a few and hope the rest work" claim: the plugin hooks zsh's line
+editor (`zle`) directly and draws the suggestion through `POSTDISPLAY` +
+`region_highlight`, the same standard, terminal-agnostic mechanism
+`zsh-autosuggestions` uses — nothing terminal-specific, no raw escape codes,
+nothing that assumes a particular emulator. Verified hands-on in Ghostty
+(`TERM=xterm-ghostty`) and Terminal.app (`TERM=xterm-256color`); both load
+the plugin and register its widgets identically.
+
+One real caveat, not specific to guesswork: if you SSH *from* a terminal with
+its own newer `TERM` value (Ghostty's `xterm-ghostty` is a known case) *into*
+a remote host whose terminfo database doesn't have that entry yet, terminal
+rendering in general can misbehave until you copy the entry over — see
+[Ghostty's own terminfo docs](https://ghostty.org/docs/help/terminfo). That's
+an environment issue any terminal program hits, not something guesswork can
+work around itself.
+
 ## Choose a provider
 
 guesswork talks to TypeSafe's Jev model either directly or through Cloudflare
