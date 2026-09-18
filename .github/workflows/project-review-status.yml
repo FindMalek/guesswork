@@ -39,4 +39,5 @@ jobs:
 
       - name: Skip (no PROJECT_TOKEN secret configured)
         if: env.HAS_TOKEN != 'true'
-        run: echo "::warning::PROJECT_TOKEN secret not set -- skipping project status sync. See #2."
+        run: |
+          echo "::warning::PROJECT_TOKEN secret not set -- skipping project status sync. See issue 2."

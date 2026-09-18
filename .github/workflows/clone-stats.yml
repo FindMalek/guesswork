@@ -37,7 +37,8 @@ jobs:
 
       - name: Skip (no PROJECT_TOKEN secret configured)
         if: env.HAS_TOKEN != 'true'
-        run: echo "::warning::PROJECT_TOKEN secret not set -- skipping clone stats update. See #2/#5."
+        run: |
+          echo "::warning::PROJECT_TOKEN secret not set -- skipping clone stats update. See issues 2 and 5."
 
       - name: Commit if changed
         if: env.HAS_TOKEN == 'true'
