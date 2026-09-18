@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/findmalek/guesswork/actions/workflows/ci.yml"><img src="https://shieldcn.dev/github/ci/findmalek/guesswork.svg?workflow=CI&variant=secondary" alt="CI" /></a>
+  <a href="https://github.com/findmalek/guesswork/actions/workflows/ci.yml"><img src="https://shieldcn.dev/github/ci/findmalek/guesswork.svg?workflow=ci.yml&variant=secondary" alt="CI" /></a>
   <a href="https://github.com/findmalek/guesswork/blob/main/LICENSE"><img src="https://shieldcn.dev/github/license/findmalek/guesswork.svg?variant=secondary" alt="License" /></a>
   <a href="https://github.com/findmalek/guesswork/commits/main"><img src="https://shieldcn.dev/github/last-commit/findmalek/guesswork.svg?variant=secondary" alt="Last commit" /></a>
   <a href="https://nodejs.org"><img src="https://shieldcn.dev/badge/node-22%2B-339933.svg?logo=nodedotjs&logoColor=white&variant=secondary" alt="Node 22+" /></a>
