@@ -39,6 +39,10 @@ _gw_clear() {
 
 _gw_show() {
   local text
+  # $_GW_KIND is one of prefix/replace/script (src/cli.ts formatForShell()).
+  # "script" (a package.json/Makefile command the user has never actually
+  # run) currently renders the same as "replace"; it's a distinct value so a
+  # future revision can style it differently without changing this contract.
   if [[ $_GW_KIND == prefix ]]; then
     text="${_GW_SUGGESTION#"$BUFFER"}"
   else
