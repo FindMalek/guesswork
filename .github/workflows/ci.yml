@@ -19,6 +19,8 @@ jobs:
       - run: npm install
       - run: npm run typecheck
       - run: npm test
+      - name: install zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
       - name: shell syntax check
         run: |
           bash -n install.sh
@@ -43,5 +45,8 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: install zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
+        if: env.TYPESAFE_API_KEY != ''
       - run: npm run test:e2e
         if: env.TYPESAFE_API_KEY != ''
