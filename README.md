@@ -85,6 +85,9 @@ prompts by passing everything after `--`:
 
 # Cloudflare Workers AI
 ./install.sh -- --provider cloudflare --account-id <id> --api-token <token>
+
+# Anthropic (fallback — see Choose a provider below)
+./install.sh -- --provider anthropic --api-key sk-ant-...
 ```
 
 Run `./install.sh -- --help` for the full flag list (custom rc file path,
@@ -143,24 +146,34 @@ work around itself.
 ## Choose a provider
 
 guesswork talks to TypeSafe's Jev model either directly or through Cloudflare
-Workers AI, which hosts the same model behind its own account-scoped API.
-Same model, same request/response shape, same code path either way — pick
-whichever is more convenient for you to bill and authenticate through.
+Workers AI, which hosts the same model behind its own account-scoped API —
+same model, same request/response shape, same code path either way. There's
+also a third option, Anthropic, for when you'd rather not sign up for either:
+it substitutes a real Claude model for Jev, asked to do the same structured
+evaluation task (see [#1](https://github.com/findmalek/guesswork/issues/1)
+for why a real self-hosted Jev isn't possible today) — not an equivalent
+model, a fallback.
 
-| | TypeSafe (direct) | Cloudflare Workers AI |
-| --- | --- | --- |
-| Input price | $42 / billion tokens | $42 / billion tokens ($0.042 / million) |
-| Context length | not published | 32,000 tokens |
-| Credentials | one API key from [typesafe.ai](https://typesafe.ai) | an [account ID + API token](#finding-your-cloudflare-account-id-and-api-token) scoped to Workers AI |
-| Billed through | TypeSafe | Cloudflare |
-| Env vars | `TYPESAFE_API_KEY` | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` |
+| | TypeSafe (direct) | Cloudflare Workers AI | Anthropic (fallback) |
+| --- | --- | --- | --- |
+| Runs | Jev | Jev | a real Claude model, not Jev |
+| Input price | $42 / billion tokens | $42 / billion tokens ($0.042 / million) | Claude Haiku 4.5: $1 / million tokens |
+| Context length | not published | 32,000 tokens | 200,000 tokens |
+| Credentials | one API key from [typesafe.ai](https://typesafe.ai) | an [account ID + API token](#finding-your-cloudflare-account-id-and-api-token) scoped to Workers AI | one API key from [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| Billed through | TypeSafe | Cloudflare | Anthropic |
+| Env vars | `TYPESAFE_API_KEY` | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | `ANTHROPIC_API_KEY` |
 
-Prices above are both providers' own published input-token rates as of this
-writing (see [What it costs](#what-it-costs)); neither publishes an output
-price, and output for this task is a short probability distribution, not
-prose, so it's a small fraction of the bill either way. If you already have a
-Cloudflare account, that's usually the path of least friction; if you'd
-rather not add another vendor, TypeSafe direct is one less account.
+Prices above are each provider's own published input-token rate as of this
+writing (see [What it costs](#what-it-costs)); none publish an output price,
+and output for this task is a short probability distribution, not prose, so
+it's a small fraction of the bill regardless of provider. If you already have
+a Cloudflare account, that's usually the path of least friction; if you'd
+rather not add another vendor, TypeSafe direct is one less account. Reach for
+Anthropic only if you don't want a TypeSafe or Cloudflare account at all —
+it's a real general-purpose model standing in for a purpose-built one, so
+scores may not calibrate the same way against the default thresholds
+(`GUESSWORK_THRESHOLD`/`GUESSWORK_MIN_SCORE`/`GUESSWORK_STRONG_SCORE`) and
+per-keystroke latency depends on a much bigger model than Jev.
 
 ### Finding your Cloudflare Account ID and API Token
 
@@ -194,11 +207,12 @@ Set these before sourcing the plugin (i.e. above the `source` line in
 | `GUESSWORK_HIGHLIGHT`      | `fg=8`  | zle highlight spec for the suggestion                               |
 | `GUESSWORK_SHOW_SCORE`     | `1`     | Append the score, e.g. `[0.87]`                                     |
 | `GUESSWORK_NODE`           | `node`  | Node binary                                                         |
-| `GUESSWORK_MODEL`          | *(SDK default, `jev-latest`)* | TypeSafe model override — TypeSafe provider only, ignored on Cloudflare |
+| `GUESSWORK_MODEL`          | *(varies by provider)* | Model override — TypeSafe: Jev version; Anthropic: Claude model (default `claude-haiku-4-5`); ignored on Cloudflare |
 | `GUESSWORK_DEBUG_LOG`      | *(unset)* | When set, every request/response is appended to this file         |
 
-Which provider is used is decided by which credentials are set (`TYPESAFE_API_KEY`
-takes priority if both happen to be set) — see [Choose a provider](#choose-a-provider).
+Which provider is used is decided by which credentials are set — TypeSafe
+takes priority, then Cloudflare, then Anthropic, if more than one happens to
+be set — see [Choose a provider](#choose-a-provider).
 
 ## How it works
 
@@ -208,7 +222,7 @@ kills any in-flight request and starts `src/cli.ts` in the background
 result is applied only if the buffer is still what was typed when the request
 started — if you kept typing past a stale request, it's silently discarded.
 
-`src/cli.ts` does one request per keystroke to TypeSafe's Jev model:
+`src/cli.ts` does one request per keystroke to whichever provider is configured:
 
 1. **Candidates.** The last `--limit` distinct commands are read from the
    history file (extended format, multi-line entries supported). If any of
@@ -234,13 +248,16 @@ history parsing are ~0.1s).
 ## What it costs
 
 Every request is small: your typed prefix plus ~100 short command strings in,
-a probability distribution over ~100 IDs out. Both providers price Jev input
+a probability distribution over ~100 IDs out. Both Jev providers price input
 at **$42 per billion tokens** ([typesafe.ai](https://typesafe.ai); Cloudflare
 publishes the same rate on its `typesafe/jev` model card, which sits behind a
 Cloudflare login so there's no public link to point at directly), and
 TypeSafe separately publishes **$0.000081 per request** as a representative
 cost for this kind of classification task — about 245x cheaper than routing
-the same request through a general-purpose chat model.
+the same request through a general-purpose chat model, which is exactly what
+the Anthropic fallback does instead: Claude Haiku 4.5 runs $1 per million
+input tokens (~24x TypeSafe/Cloudflare's rate) — still cheap in absolute
+terms for a request this size, just not purpose-built-model cheap.
 
 A single suggestion costs a fraction of a cent; a hundred of them in one
 heavy coding day is still under a penny. Even typing enough to trigger a few

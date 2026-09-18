@@ -2,8 +2,9 @@
 # End-to-end test: drives a real interactive zsh inside a pseudo-terminal,
 # types into it, and asserts that the plugin shows and accepts suggestions.
 #
-# Requires either TYPESAFE_API_KEY, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN,
-# in the environment (inherited by the child shell, never printed). Run with:
+# Requires one of: TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN,
+# or ANTHROPIC_API_KEY, in the environment (inherited by the child shell, never
+# printed). Run with:
 #   zsh test/e2e.zsh
 #
 # Set GUESSWORK_E2E_KEEP=1 to keep the temp files for inspection.
@@ -11,8 +12,8 @@
 emulate -L zsh
 zmodload zsh/zpty || { print -u2 "zsh/zpty module required"; exit 1 }
 
-if [[ -z $TYPESAFE_API_KEY && ( -z $CLOUDFLARE_ACCOUNT_ID || -z $CLOUDFLARE_API_TOKEN ) ]]; then
-  print -u2 "no credentials set (need TYPESAFE_API_KEY, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN)"
+if [[ -z $TYPESAFE_API_KEY && ( -z $CLOUDFLARE_ACCOUNT_ID || -z $CLOUDFLARE_API_TOKEN ) && -z $ANTHROPIC_API_KEY ]]; then
+  print -u2 "no credentials set (need TYPESAFE_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN, or ANTHROPIC_API_KEY)"
   exit 2
 fi
 

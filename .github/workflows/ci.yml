@@ -29,11 +29,10 @@ jobs:
 
   # The real end-to-end test drives an interactive zsh against a live provider
   # and needs a paid API key, so it only runs on pushes to main (never on PRs,
-  # which may come from forks without access to the secret) and only if either
-  # TYPESAFE_API_KEY, or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN, has
-  # actually been added to the repo's secrets. Add one under Settings →
-  # Secrets and variables → Actions to enable it; costs are tiny (see the
-  # README's "What it costs" section) but real.
+  # which may come from forks without access to the secret) and only if one
+  # provider's credentials have actually been added to the repo's secrets.
+  # Add them under Settings → Secrets and variables → Actions to enable it;
+  # costs are tiny (see the README's "What it costs" section) but real.
   e2e:
     runs-on: ubuntu-latest
     needs: test
@@ -42,6 +41,7 @@ jobs:
       TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,6 +50,6 @@ jobs:
       - run: npm install
       - name: install zsh
         run: sudo apt-get update && sudo apt-get install -y zsh
-        if: env.TYPESAFE_API_KEY != '' || (env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_API_TOKEN != '')
+        if: env.TYPESAFE_API_KEY != '' || (env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_API_TOKEN != '') || env.ANTHROPIC_API_KEY != ''
       - run: npm run test:e2e
-        if: env.TYPESAFE_API_KEY != '' || (env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_API_TOKEN != '')
+        if: env.TYPESAFE_API_KEY != '' || (env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_API_TOKEN != '') || env.ANTHROPIC_API_KEY != ''
