@@ -333,6 +333,13 @@ re-request, that <kbd>→</kbd> and <kbd>^E</kbd> accept and run the command (in
 emacs and vi keymaps), that nonsense yields nothing, and that a stale response
 is discarded when the buffer changes mid-request.
 
+## Website
+
+A Next.js landing page with an interactive playground (a hand-built terminal
+look-alike that ports the real prefix/fuzzy ranking logic client-side against
+a fabricated history — see [`site/`](./site) for details) lives in this repo
+under `site/`. Not yet deployed — see [`site/README.md`](./site/README.md).
+
 ## Contributing
 
 Every PR needs a linked issue first — open one with the
