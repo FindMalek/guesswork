@@ -28,8 +28,14 @@ echo "$UPDATED_HISTORY" > "$HISTORY_FILE"
 TOTAL=$(jq '[.[].count] | add // 0' "$HISTORY_FILE")
 TOTAL_FORMATTED=$(printf "%'d" "$TOTAL" 2>/dev/null || echo "$TOTAL")
 
-BADGE_URL="https://shieldcn.dev/badge/clones-${TOTAL_FORMATTED// /%20}-4c1.svg?variant=secondary"
-BADGE_LINE="[![clones](${BADGE_URL})](https://github.com/${REPO})"
+# "clones" is what the Traffic API actually counts, but a first-time
+# `install.sh` run does call `git clone` under the hood, so this is a
+# reasonable (if imperfect) proxy for installs. Label it as such rather
+# than a bare, context-free "clones" number — see #9. The label segment
+# needs its space URL-encoded the same way TOTAL_FORMATTED's is below.
+BADGE_LABEL="installs%20(approx)"
+BADGE_URL="https://shieldcn.dev/badge/${BADGE_LABEL}-${TOTAL_FORMATTED// /%20}-4c1.svg?variant=secondary"
+BADGE_LINE="[![installs (approx)](${BADGE_URL})](https://github.com/${REPO})"
 
 awk -v start="$MARKER_START" -v end="$MARKER_END" -v badge="$BADGE_LINE" '
   $0 == start { print; print badge; skip = 1; next }
