@@ -38,8 +38,8 @@ ranking understands intent instead of only comparing characters.
 
 ## Install
 
-One-liner (clones the repo, installs dependencies, and launches the setup
-wizard):
+One-liner (clones the repo, installs dependencies, and launches an
+arrow-key setup wizard):
 
 ```sh
 git clone https://github.com/findmalek/guesswork.git ~/.zsh/guesswork

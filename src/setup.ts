@@ -1,14 +1,15 @@
 #!/usr/bin/env node
-// Interactive setup wizard: pick a provider, paste credentials, verify they
-// work, and wire everything into the right shell rc file. Also drivable
-// non-interactively (see --help) so an agent can run it in one shot.
+// Interactive setup wizard: pick a provider with the arrow keys, paste
+// credentials, watch it verify them live, and it wires everything into your
+// zsh rc file. Also drivable non-interactively (see --help) so an agent can
+// run it in one shot without a TTY.
 import { parseArgs } from "node:util";
 import { homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { createInterface } from "node:readline/promises";
 import { noul, TypeSafeClient } from "@typesafe-ai/sdk";
+import * as p from "@clack/prompts";
 import { cloudflareFetch } from "./cloudflare.ts";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -19,8 +20,10 @@ const HELP = `guesswork setup: configure a provider and wire up your zsh rc file
 
 Usage: node src/setup.ts [options]
 
-Runs interactively when there's a TTY and no --provider is given. For
-non-interactive / agent-driven runs, pass everything up front:
+Runs as an interactive, arrow-key wizard when there's a TTY. Any option given
+below pre-fills that step (so e.g. --provider alone still prompts for
+credentials interactively). Without a TTY, every needed option must be
+passed — there's nothing to prompt into.
 
   --provider <typesafe|cloudflare>
   --api-key <key>                  TypeSafe: your TYPESAFE_API_KEY
@@ -69,105 +72,84 @@ function parseCliArgs(): Args {
   };
 }
 
-// ------------------------------------------------------------------- io ---
-
-const rl = createInterface({ input: process.stdin, output: process.stdout });
-
-async function ask(question: string): Promise<string> {
-  return (await rl.question(question)).trim();
-}
-
-/** Reads a line without echoing it back, for pasting secrets. Falls back to a plain prompt when stdin isn't a TTY (e.g. piped input in CI). */
-async function askSecret(question: string): Promise<string> {
-  if (!process.stdin.isTTY) return ask(question);
-
-  process.stdout.write(question);
-  return new Promise((resolve) => {
-    let value = "";
-    const stdin = process.stdin;
-    stdin.setRawMode(true);
-    stdin.resume();
-    stdin.setEncoding("utf8");
-    const onData = (chunk: string) => {
-      for (const char of chunk) {
-        if (char === "\n" || char === "\r") {
-          stdin.setRawMode(false);
-          stdin.pause();
-          stdin.removeListener("data", onData);
-          process.stdout.write("\n");
-          resolve(value.trim());
-          return;
-        }
-        if (char === "") {
-          process.stdout.write("\n");
-          process.exit(130);
-        }
-        if (char === "" || char === "\b") {
-          if (value.length > 0) {
-            value = value.slice(0, -1);
-            process.stdout.write("\b \b");
-          }
-          continue;
-        }
-        value += char;
-        process.stdout.write("*");
-      }
-    };
-    stdin.on("data", onData);
-  });
-}
-
 // ------------------------------------------------------------- providers --
 
 type Provider = "typesafe" | "cloudflare";
 
 interface Credentials {
   provider: Provider;
-  apiKey?: string; // typesafe
-  accountId?: string; // cloudflare
-  apiToken?: string; // cloudflare
+  apiKey: string | undefined; // typesafe
+  accountId: string | undefined; // cloudflare
+  apiToken: string | undefined; // cloudflare
 }
 
-async function pickProvider(args: Args): Promise<Provider> {
+function exitOnCancel<T>(value: T | typeof p.CANCEL_SYMBOL): T {
+  if (p.isCancel(value)) {
+    p.cancel("Setup cancelled — nothing was written.");
+    process.exit(0);
+  }
+  return value as T;
+}
+
+async function pickProvider(args: Args, tty: boolean): Promise<Provider> {
   if (args.provider === "typesafe" || args.provider === "cloudflare") return args.provider;
   if (args.provider) {
     console.error(`unknown --provider "${args.provider}"; expected "typesafe" or "cloudflare"`);
     process.exit(2);
   }
-  if (!process.stdin.isTTY) {
+  if (!tty) {
     console.error("no TTY and no --provider given; pass --provider typesafe|cloudflare (see --help)");
     process.exit(2);
   }
-  console.log("Which provider should guesswork use?\n");
-  console.log("  1) TypeSafe        — direct, get a key at https://typesafe.ai");
-  console.log("  2) Cloudflare      — Workers AI hosts the same model, billed through your Cloudflare account\n");
-  while (true) {
-    const answer = await ask("> ");
-    if (answer === "1") return "typesafe";
-    if (answer === "2") return "cloudflare";
-    console.log('Please enter "1" or "2".');
-  }
+  return exitOnCancel(
+    await p.select({
+      message: "Which provider should guesswork use?",
+      options: [
+        { value: "typesafe", label: "TypeSafe", hint: "direct — typesafe.ai" },
+        { value: "cloudflare", label: "Cloudflare Workers AI", hint: "same model, billed through Cloudflare" },
+      ],
+    }),
+  );
 }
 
-async function collectCredentials(provider: Provider, args: Args): Promise<Credentials> {
+async function collectCredentials(provider: Provider, args: Args, tty: boolean): Promise<Credentials> {
   if (provider === "typesafe") {
-    const apiKey = args.apiKey ?? (await askSecret("Paste your TYPESAFE_API_KEY: "));
+    let apiKey = args.apiKey;
     if (!apiKey) {
-      console.error("no API key given");
-      process.exit(2);
+      if (!tty) {
+        console.error("no TTY and no --api-key given (see --help)");
+        process.exit(2);
+      }
+      apiKey = exitOnCancel(
+        await p.password({
+          message: "Paste your TYPESAFE_API_KEY (get one at https://typesafe.ai)",
+          validate: (v) => (v ? undefined : "an API key is required"),
+        }),
+      );
     }
-    return { provider, apiKey };
+    return { provider, apiKey, accountId: undefined, apiToken: undefined };
   }
 
-  console.log("\nFind your Account ID in the Cloudflare dashboard sidebar.");
-  console.log("Create a token with Workers AI access at https://dash.cloudflare.com/profile/api-tokens\n");
-  const accountId = args.accountId ?? (await ask("Cloudflare Account ID: "));
-  const apiToken = args.apiToken ?? (await askSecret("Cloudflare API Token: "));
+  let accountId = args.accountId;
+  let apiToken = args.apiToken;
   if (!accountId || !apiToken) {
-    console.error("account ID and API token are both required");
-    process.exit(2);
+    if (!tty) {
+      console.error("no TTY and no --account-id/--api-token given (see --help)");
+      process.exit(2);
+    }
+    p.note(
+      "Find your Account ID in the Cloudflare dashboard sidebar.\n" +
+        "Create a token with Workers AI access at https://dash.cloudflare.com/profile/api-tokens",
+      "Cloudflare",
+    );
+    accountId ??= exitOnCancel(
+      await p.text({ message: "Cloudflare Account ID", validate: (v) => (v ? undefined : "required") }),
+    );
+    apiToken ??= exitOnCancel(
+      await p.password({ message: "Cloudflare API Token", validate: (v) => (v ? undefined : "required") }),
+    );
   }
-  return { provider, accountId, apiToken };
+  return { provider, apiKey: undefined, accountId, apiToken };
 }
 
 function buildClient(creds: Credentials): TypeSafeClient {
@@ -237,34 +219,42 @@ function escapeRegExp(s: string): string {
 
 async function main(): Promise<void> {
   const args = parseCliArgs();
+  const tty = process.stdin.isTTY === true;
 
-  console.log("guesswork setup\n");
+  if (tty) p.intro("guesswork setup");
+  else console.log("guesswork setup (non-interactive)");
 
-  const provider = await pickProvider(args);
-  const creds = await collectCredentials(provider, args);
+  const provider = await pickProvider(args, tty);
+  const creds = await collectCredentials(provider, args, tty);
 
   if (!args.skipTest) {
-    process.stdout.write(`\nTesting your ${provider} credentials... `);
+    const s = tty ? p.spinner() : undefined;
+    s ? s.start(`Testing your ${provider} credentials`) : process.stdout.write("Testing credentials... ");
     const result = await testCredentials(creds);
+
     if (result.ok) {
-      console.log("ok");
+      s ? s.stop("Credentials verified") : console.log("ok");
     } else {
-      console.log("failed");
-      console.error(`  ${result.message}`);
-      if (process.stdin.isTTY && !args.yes) {
-        const retry = await ask("\nSave the config anyway? [y/N] ");
-        if (retry.toLowerCase() !== "y") {
-          console.log("aborted; nothing was written");
+      s ? s.error("Credentials check failed") : console.log("failed");
+      if (tty) {
+        p.note(result.message, "Error");
+        const proceed = exitOnCancel(await p.confirm({ message: "Save the config anyway?", initialValue: false }));
+        if (!proceed) {
+          p.cancel("Nothing was written.");
           process.exit(1);
         }
       } else {
+        console.error(`  ${result.message}`);
         process.exit(1);
       }
     }
   }
 
   const warning = shellWarning();
-  if (warning) console.log(`\n⚠ ${warning}`);
+  if (warning) {
+    if (tty) p.log.warn(warning);
+    else console.warn(`warning: ${warning}`);
+  }
 
   const path = rcPath(args);
   const exportLines =
@@ -273,9 +263,12 @@ async function main(): Promise<void> {
       : [`export CLOUDFLARE_ACCOUNT_ID=${creds.accountId}`, `export CLOUDFLARE_API_TOKEN=${creds.apiToken}`];
   writeBlock(path, [...exportLines, `source "${join(REPO_ROOT, "zsh/guesswork.plugin.zsh")}"`]);
 
-  console.log(`\nWrote config to ${path}`);
-  console.log("Run 'exec zsh' (or open a new terminal) to start using it.");
-  rl.close();
+  if (tty) {
+    p.outro(`Wrote config to ${path} — run 'exec zsh' (or open a new terminal) to start using it.`);
+  } else {
+    console.log(`Wrote config to ${path}`);
+    console.log("Run 'exec zsh' (or open a new terminal) to start using it.");
+  }
 }
 
 main().catch((err: unknown) => {
