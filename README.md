@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://shieldcn.dev/header/gradient.svg?title=guesswork&subtitle=Fish-style+autosuggestions+for+zsh+%E2%80%94+but+the+shell+actually+guesses+right&logo=typescript&align=center&theme=violet" alt="guesswork" width="720" />
+  <img src="demo/demo.gif" alt="guesswork: real Jev-ranked zsh autosuggestions, prefix and fuzzy mode" width="720" />
 </p>
 
 <p align="center">
@@ -32,11 +32,12 @@ literal prefixes — and shows the best guess inline, fish-style, grey text
 after your cursor. Press <kbd>→</kbd> to accept it.
 
 ```
-% git st▌atus  [0.970]                        prefix mode: literal completion
-% last 5 commits▌  ⇢ git log --oneline -5  [1.000]   replace mode: no entry starts with the input
+% gst▌  ⇢ git status  [0.990]                        fuzzy mode: abbreviation match
+% last 5 commits▌  ⇢ git log --oneline -5  [0.990]   fuzzy mode: no entry starts with the input
 ```
 
-That's a real transcript, not a mockup — regenerate it with
+The GIF above is that same moment recorded for real, not a mockup — the
+transcript just adds the mode annotations. Regenerate either with
 `demo/make-demo.sh` (needs `vhs`, `ffmpeg`, and a provider key; runs against a
 fabricated history, never your real one).
 
