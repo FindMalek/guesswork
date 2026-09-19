@@ -60,15 +60,21 @@ async function fetchJevSuggestion(typed: string, signal: AbortSignal): Promise<S
  * fuzzy) and the `⇢` / plain-completion display format are the real plugin's
  * logic, ported as-is in `suggest-core.ts`.
  */
+interface SuggestionResult {
+  /** The buffer this suggestion was computed for -- see `effectiveSuggestion`. */
+  buffer: string;
+  suggestion: Suggestion | undefined;
+}
+
 export function TerminalPlayground() {
   const [buffer, setBuffer] = useState("");
   const [ranLines, setRanLines] = useState<RanLine[]>([]);
-  const [suggestion, setSuggestion] = useState<Suggestion | undefined>();
+  const [result, setResult] = useState<SuggestionResult | undefined>();
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Below MIN_CHARS, `effectiveSuggestion` below hides whatever's in
-  // `suggestion` at render time -- no setState here, so a short buffer never
+  // `result` at render time -- no setState here, so a short buffer never
   // needs to synchronously clear state the way an early-return would.
   useEffect(() => {
     if (buffer.trim().length < MIN_CHARS) return;
@@ -81,11 +87,14 @@ export function TerminalPlayground() {
       fetchJevSuggestion(buffer, controller.signal).then((real) => {
         if (controller.signal.aborted) return;
         if (real) {
-          setSuggestion(real);
+          setResult({ buffer, suggestion: real });
           return;
         }
         const fake = fakeSuggest(buffer, FAKE_HISTORY);
-        setSuggestion(fake && { command: fake.command, score: fake.score, isPrefix: fake.kind === "prefix" });
+        setResult({
+          buffer,
+          suggestion: fake && { command: fake.command, score: fake.score, isPrefix: fake.kind === "prefix" },
+        });
       });
     }, DEBOUNCE_MS);
 
@@ -94,10 +103,13 @@ export function TerminalPlayground() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  // Renders as "no suggestion" below MIN_CHARS even if `suggestion` still
-  // holds a stale result from a longer buffer the user just deleted back
-  // from -- avoids needing to clear it with an effect-body setState.
-  const effectiveSuggestion = buffer.trim().length >= MIN_CHARS ? suggestion : undefined;
+  // Requires the result to have been computed for the CURRENT buffer, not
+  // just any recent one -- otherwise a suggestion fetched while the visitor
+  // was still typing an earlier prefix could get displayed (and accepted)
+  // against a buffer it was never ranked for, once the debounce window
+  // closes on a buffer that still happens to clear MIN_CHARS.
+  const effectiveSuggestion =
+    buffer.trim().length >= MIN_CHARS && result?.buffer === buffer ? result.suggestion : undefined;
 
   function acceptSuggestion() {
     if (!effectiveSuggestion) return;

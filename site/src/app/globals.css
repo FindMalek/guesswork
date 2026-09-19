@@ -13,19 +13,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Literal font names, not var(--font-sans)/var(--font-heading): Tailwind
-     v4's @theme inline resolves at parse time, but Next.js only injects its
-     font variables via a runtime className, so a var() reference here
-     silently resolves to nothing -- worse, when (as here) the @theme token
-     name and the next/font `variable` option are the *same* string, it's a
-     self-referencing custom property, which is invalid at computed-value
-     time per the CSS spec (it does not fall through to the real value). See
-     globals.css font troubleshooting in shadcn's own Next.js + Tailwind v4
-     guidance. Body copy is Inter, headings are Geist Mono, and code/terminal
-     UI stays on JetBrains Mono via `font-mono` (untouched by the preset). */
-  --font-sans: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace;
-  --font-heading: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  /* var(--font-inter) etc., not literal font-family strings: next/font
+     (layout.tsx) names its generated variables --font-inter,
+     --font-jetbrains-mono, and --font-geist-mono specifically so these can
+     reference them directly without colliding with @theme's own
+     --font-sans/--font-mono/--font-heading token names -- that collision
+     (same name on both sides) is what made a var() reference here
+     self-referencing and invalid at computed-value time in an earlier
+     version of this file. Referencing the real variables (rather than
+     guessing next/font's fallback-family naming convention in a literal
+     string) picks up next/font's actual metric-matched fallback stack. */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-geist-mono);
   /* Fixed-dark terminal window chrome -- intentionally does not follow the
      site's light/dark toggle (real terminals are dark), so these live
      outside :root/.dark and are the only place their values are defined.
