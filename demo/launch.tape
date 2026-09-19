@@ -15,8 +15,16 @@
 #   1. fuzzy-mode suggestion ("gst" -> "git status", the flagship
 #      abbreviation from the README's own pitch)
 #   2. fuzzy-mode suggestion ("last 5 commits" -> "git log --oneline -5")
-#   3. fuzzy-mode suggestion ("kgp" -> "kubectl get pods -n staging")
+#   3. nothing matches ("xyzzy") -- no suggestion, no hallucination
 #   4. a clean closing prompt
+#
+# A fourth beat, "kgp" -> "kubectl get pods -n staging", was tried and cut:
+# verified against an actual rendered take that it never cleared the
+# confidence gate (no suggestion ever appeared, so the closing beat just ran
+# "kgp" as a literal command -- "command not found", on camera). Per this
+# project's own stance on picking a different example rather than forcing
+# one that doesn't reliably reproduce, swapped for "xyzzy", which doesn't
+# depend on model confidence to behave correctly.
 #
 # Two beats from the full launch script are intentionally NOT here:
 #   - the `curl ... install.sh | bash` one-liner, which needs a real DNS/
@@ -68,13 +76,11 @@ Sleep 1500ms
 Enter
 Sleep 3500ms
 
-# 3. fuzzy mode again: a longer command collapsed from three letters
-Type "kgp"
+# 3. nothing in history matches: no suggestion, no hallucination
+Type "xyzzy"
 Sleep 3500ms
-Right
-Sleep 1500ms
-Enter
-Sleep 3s
+Ctrl+U
+Sleep 1s
 
 # 4. clean prompt, cursor blinking — closing shot
 Sleep 3s
