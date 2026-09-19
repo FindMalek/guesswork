@@ -13,7 +13,7 @@
 
 <p align="center">
 <!-- clone-stats:start -->
-[![installs (approx)](https://shieldcn.dev/badge/installs%20(approx)-0-4c1.svg?variant=secondary)](https://github.com/findmalek/guesswork)
+[![installs (approx)](https://shieldcn.dev/badge/installs%20(approx)-449-4c1.svg?variant=secondary)](https://github.com/FindMalek/guesswork)
 <!-- clone-stats:end -->
 <br>
 <sub>Counts real <code>git clone</code>s of this repo — every first-time <code>install.sh</code> run does one internally, plus some people who clone without installing, so treat it as a close proxy, not a byte-exact install count.</sub>
