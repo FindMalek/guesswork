@@ -14,7 +14,7 @@ build_demo_fixture() {
   (
     cd "$demo/project"
     git init -q
-    printf '# demo\n\nA tiny demo project.\n' > README.md
+    printf '# jev-is-awesome\n\nA tiny demo project.\n' > README.md
     git add .
     git -c user.name=demo -c user.email=demo@example.com commit -qm "initial commit"
 
@@ -36,11 +36,12 @@ build_demo_fixture() {
   )
 
   # git/docker/kubectl-style entries an engineer's real history tends to
-  # accumulate — "git status" and "git log --oneline -5" are here on purpose:
-  # beat 1 (prefix mode) needs "git status" reachable from "git st", and beat
-  # 2 (fuzzy mode) needs a real "last N commits" candidate, which now also
-  # has 5 real commits behind it so the accepted command's actual output
-  # looks like a genuine answer instead of a single line.
+  # accumulate — specific entries are load-bearing for the tapes' beats:
+  # "git status" (vs. the decoy "git stash list") for "gst", "kubectl get
+  # pods -n staging" for "kgp", and "git log --oneline -5" for the "last 5
+  # commits" fuzzy-intent beat, which now also has 5 real commits behind it
+  # so the accepted command's actual output looks like a genuine answer
+  # instead of a single line.
   local -a fake_history=(
     'brew upgrade'
     'ssh staging-web-01'
@@ -71,7 +72,7 @@ build_demo_fixture() {
   cat > "$demo/setup.zsh" <<EOF
 cd $demo/project
 HISTFILE=$demo/history
-PROMPT='%F{blue}demo%f %F{magenta}❯%f '
+PROMPT='%F{blue}jev-is-awesome%f %F{magenta}❯%f '
 bindkey -e
 bindkey '^E' end-of-line
 GUESSWORK_SHOW_SCORE=1
