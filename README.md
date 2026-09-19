@@ -32,14 +32,21 @@ literal prefixes — and shows the best guess inline, fish-style, grey text
 after your cursor. Press <kbd>→</kbd> to accept it.
 
 ```
-% git st▌atus  [0.970]                        prefix mode: literal completion
-% last 5 commits▌  ⇢ git log --oneline -5  [1.000]   replace mode: no entry starts with the input
+% gst▌  ⇢ git status  [0.990]                        fuzzy mode: abbreviation match
+% last 5 commits▌  ⇢ git log --oneline -5  [0.990]   fuzzy mode: no entry starts with the input
 ```
 
 The GIF above is that same moment recorded for real, not a mockup — the
 transcript just adds the mode annotations. Regenerate either with
 `demo/make-demo.sh` (needs `vhs`, `ffmpeg`, and a provider key; runs against a
 fabricated history, never your real one).
+
+There's also `demo/make-launch-demo.sh` / `demo/launch.tape`, a longer,
+slower-paced cut of the same fabricated environment meant for a first-impression
+launch video rather than a quick inline GIF — it covers the same prefix/fuzzy
+suggestion beats plus a clean closing shot, and deliberately stops short of
+the install one-liner and setup wizard (those need a real network fetch and
+real provider credentials, so they're recorded by hand separately).
 
 ## Why not just fzf / prefix search?
 
@@ -288,10 +295,11 @@ is discarded when the buffer changes mid-request.
 
 ## Website
 
-A Next.js landing page with an interactive playground (a hand-built terminal
-look-alike that ports the real prefix/fuzzy ranking logic client-side against
-a fabricated history — see [`site/`](./site) for details) lives in this repo
-under `site/`. Not yet deployed — see [`site/README.md`](./site/README.md).
+**[guesswork.findmalek.com](https://guesswork.findmalek.com)** — a Next.js
+landing page with an interactive terminal playground (a hand-built terminal
+look-alike, not a real shell) that ranks suggestions with the real Jev model
+through a rate-limited server proxy, falling back to a local deterministic
+stand-in when that's unavailable — see [`site/`](./site) for details.
 
 ## Contributing
 
