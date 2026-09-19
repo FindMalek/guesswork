@@ -4,12 +4,13 @@
   "private": true,
   "packageManager": "pnpm@10.33.4",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "pnpm run sync-install-script && next dev",
+    "build": "pnpm run sync-install-script && next build",
     "start": "next start",
     "lint": "eslint",
     "typegen": "next typegen",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "sync-install-script": "cp ../install.sh public/install.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
