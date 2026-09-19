@@ -81,8 +81,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Route/layout types (e.g. LayoutProps) are ambient globals Next.js
+      # generates on demand -- `next typegen` (or a full build/dev run)
+      # must happen before `tsc` can see them.
       - name: Check types
-        run: pnpm exec tsc --noEmit
+        run: pnpm typecheck
 
   build:
     name: Build
