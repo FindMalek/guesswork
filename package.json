@@ -8,7 +8,8 @@
     "suggest": "node src/cli.ts",
     "setup": "node src/setup.ts",
     "sync-repo": "chmod +x scripts/sync-repo.sh && scripts/sync-repo.sh",
-    "test:e2e": "zsh test/e2e.zsh"
+    "test:e2e": "zsh test/e2e.zsh",
+    "dev:site": "cd site && pnpm dev"
   },
   "license": "MIT",
   "type": "module",

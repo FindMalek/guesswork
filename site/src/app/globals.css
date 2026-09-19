@@ -1,0 +1,221 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Palette, radius, and font pairing are copied verbatim (same hex/rem
+   values) from tester.army/e2e's `.ta-landing`/`.ta-e2e`/`.ta-surface-light`
+   scopes -- dark is their actual landing-page theme, light is their
+   secondary "surface-light" scope adapted as our light mode. Not a
+   composited PNG background asset (that's their specific creative work, not
+   just a technique) -- see ambient-background.tsx for the from-scratch
+   equivalent. */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* var(--font-inter) etc., not literal font-family strings: next/font
+     (layout.tsx) names its generated variables --font-inter, --font-dm-mono,
+     and --font-stack-sans-notch specifically so these can reference them
+     directly without colliding with @theme's own token names of similar
+     shape -- a same-name collision is what made an earlier version of this
+     file's var() references self-referencing and invalid at computed-value
+     time. Body copy is Inter, code/UI-chrome mono is DM Mono, and display
+     headings are Stack Sans Notch -- the same three-font pairing as the
+     reference. */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-dm-mono);
+  --font-heading: var(--font-stack-sans-notch);
+  /* Terminal window chrome -- intentionally does not follow the site's
+     light/dark toggle (real terminals/code windows are dark), so these live
+     outside :root/.dark and are the only place their values are defined.
+     Components reference them as bg-terminal-bg etc., never a literal hex.
+     Values match the reference's actual code-window chrome exactly
+     (ta-grey-450 card, ta-grey-500 header, ta-grey-400 border, ta-grey-300
+     dots, ta-grey-100 muted text, ta-sand-50 body text). */
+  --color-terminal-bg: var(--terminal-bg);
+  --color-terminal-header: var(--terminal-header);
+  --color-terminal-border: var(--terminal-border);
+  --color-terminal-text: var(--terminal-text);
+  --color-terminal-muted: var(--terminal-muted);
+  --color-terminal-dot: var(--terminal-dot);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+}
+
+@keyframes gw-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Nudges the wordmark's "press →" hint toward the right, hinting at the key
+   to press without being a distracting full bounce. */
+@keyframes nudge-right {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+:root {
+  /* Light = the reference's "surface-light" scope: sand background, near-black text. */
+  --radius: 0;
+  --background: #f9f8f7;
+  --foreground: #161616;
+  --card: #ffffff;
+  --card-foreground: #161616;
+  --popover: #ffffff;
+  --popover-foreground: #161616;
+  --primary: #ff8001;
+  --primary-foreground: #ffffff;
+  --secondary: #e6e4dc;
+  --secondary-foreground: #161616;
+  --muted: #e6e4dc;
+  --muted-foreground: #58554c;
+  --accent: #ff8001;
+  --accent-foreground: #161616;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #dcd8ce;
+  --input: #dcd8ce;
+  --ring: #ff8001;
+  --chart-1: #ff8001;
+  --chart-2: #58554c;
+  --chart-3: #898477;
+  --chart-4: #dcd8ce;
+  --chart-5: #161616;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #161616;
+  --sidebar-primary: #ff8001;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6e4dc;
+  --sidebar-accent-foreground: #161616;
+  --sidebar-border: #dcd8ce;
+  --sidebar-ring: #ff8001;
+  --terminal-bg: #1e1e1e;
+  --terminal-header: #161616;
+  --terminal-border: #4e4e4e;
+  --terminal-text: #f9f8f7;
+  --terminal-muted: #cecece;
+  --terminal-dot: #787878;
+}
+
+.dark {
+  /* Dark = the reference's actual `.ta-landing.ta-e2e` landing-page scope. */
+  --background: #161616;
+  --foreground: #f9f8f7;
+  --card: #1e1e1e;
+  --card-foreground: #f9f8f7;
+  --popover: #4e4e4e;
+  --popover-foreground: #f9f8f7;
+  --primary: #ff8001;
+  --primary-foreground: #161616;
+  --secondary: #4e4e4e;
+  --secondary-foreground: #f9f8f7;
+  --muted: #4e4e4e;
+  --muted-foreground: #cecece;
+  --accent: #ff8001;
+  --accent-foreground: #161616;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #4e4e4e;
+  --input: #4e4e4e;
+  --ring: #ff8001;
+  --chart-1: #ff8001;
+  --chart-2: #cecece;
+  --chart-3: #9f9f9f;
+  --chart-4: #4e4e4e;
+  --chart-5: #f9f8f7;
+  --sidebar: #1e1e1e;
+  --sidebar-foreground: #f9f8f7;
+  --sidebar-primary: #ff8001;
+  --sidebar-primary-foreground: #161616;
+  --sidebar-accent: #4e4e4e;
+  --sidebar-accent-foreground: #f9f8f7;
+  --sidebar-border: #4e4e4e;
+  --sidebar-ring: #ff8001;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Subtle grain texture, fixed over the whole viewport. A tiled SVG
+   feTurbulence noise at very low opacity, blended with `overlay` so it reads
+   as paper grain rather than visible speckle. Works unchanged in both
+   themes since overlay blending adapts to whatever's underneath; the noise
+   itself doesn't carry theme-specific color. */
+.bg-grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Ordered-dither dot screen for the hero's ambient glow (see
+   ambient-background.tsx) -- a from-scratch equivalent of the reference's
+   dithered PNG texture, not a copy of the file itself. Tint is derived from
+   the theme's own --primary via color-mix rather than a separate hardcoded
+   color, so it stays in sync if the palette ever changes. */
+.bg-dither-matrix {
+  background-image: radial-gradient(color-mix(in oklch, var(--primary) 14%, transparent) 1px, transparent 0);
+  background-size: 8px 8px;
+}
+.dark .bg-dither-matrix {
+  background-image: radial-gradient(color-mix(in oklch, var(--primary) 9%, transparent) 1px, transparent 0);
+  background-size: 8px 8px;
+}
