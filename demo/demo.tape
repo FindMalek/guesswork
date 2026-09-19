@@ -3,6 +3,10 @@
 # in /tmp/guesswork-demo (nothing personal is recorded) and assembles the
 # MP4/GIF from the frames with ffmpeg (vhs 0.12.0 fails to render on its own,
 # see vhs#787).
+#
+# Custom "guesswork" theme, not a stock VHS one -- exact hex values from the
+# site's own dark palette (site/src/app/globals.css) so the README GIF, the
+# website, and the launch video all read as the same product.
 
 Output demo/frames/
 
@@ -10,7 +14,7 @@ Set Shell zsh
 Set FontSize 30
 Set Width 1300
 Set Height 500
-Set Theme "Catppuccin Mocha"
+Set Theme {"name":"guesswork","black":"#4e4e4e","red":"#d15955","green":"#48a964","yellow":"#dca842","blue":"#ff8001","magenta":"#ffb56c","cyan":"#9f9f9f","white":"#f9f8f7","brightBlack":"#787878","brightRed":"#d15955","brightGreen":"#48a964","brightYellow":"#dca842","brightBlue":"#ff8001","brightMagenta":"#ffb56c","brightCyan":"#cecece","brightWhite":"#ffffff","background":"#161616","foreground":"#f9f8f7","selection":"#4e4e4e","cursor":"#ff8001"}
 Set TypingSpeed 90ms
 
 Hide
@@ -21,8 +25,10 @@ Show
 
 Sleep 1s
 
-# 1. prefix mode: history has both "git status" and "git stash list"
-Type "git st"
+# 1. fuzzy mode, the flagship abbreviation from the README's own pitch: "gst"
+# isn't a literal prefix of anything in history, so the model has to pick
+# "git status" over the other "g-s-t"-shaped candidate, "git stash list"
+Type "gst"
 Sleep 2500ms
 Right
 Sleep 800ms
@@ -37,14 +43,14 @@ Sleep 800ms
 Enter
 Sleep 2500ms
 
-# 3. nothing in history matches: no suggestion
+# 3. nothing in history matches: no suggestion, no hallucination
 Type "xyzzy"
 Sleep 2500ms
 Ctrl+U
 Sleep 600ms
 
-# 4. fuzzy mode again
-Type "logs"
+# 4. fuzzy mode again: a longer command collapsed from three letters
+Type "kgp"
 Sleep 2500ms
 Right
 Sleep 2500ms

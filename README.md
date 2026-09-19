@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://shieldcn.dev/header/gradient.svg?title=guesswork&subtitle=Fish-style+autosuggestions+for+zsh+%E2%80%94+but+the+shell+actually+guesses+right&logo=typescript&align=center&theme=violet" alt="guesswork" width="720" />
+  <img src="demo/demo.gif" alt="guesswork: real Jev-ranked zsh autosuggestions, prefix and fuzzy mode" width="720" />
 </p>
 
 <p align="center">
@@ -13,7 +13,7 @@
 
 <p align="center">
 <!-- clone-stats:start -->
-[![installs (approx)](https://shieldcn.dev/badge/installs%20(approx)-449-4c1.svg?variant=secondary)](https://github.com/FindMalek/guesswork)
+  <a href="https://github.com/FindMalek/guesswork"><img src="https://shieldcn.dev/badge/installs%20(approx)-449-4c1.svg?variant=secondary" alt="installs (approx)" /></a>
 <!-- clone-stats:end -->
 <br>
 <sub>Counts real <code>git clone</code>s of this repo — every first-time <code>install.sh</code> run does one internally, plus some people who clone without installing, so treat it as a close proxy, not a byte-exact install count.</sub>
@@ -36,7 +36,8 @@ after your cursor. Press <kbd>→</kbd> to accept it.
 % last 5 commits▌  ⇢ git log --oneline -5  [1.000]   replace mode: no entry starts with the input
 ```
 
-That's a real transcript, not a mockup — regenerate it with
+The GIF above is that same moment recorded for real, not a mockup — the
+transcript just adds the mode annotations. Regenerate either with
 `demo/make-demo.sh` (needs `vhs`, `ffmpeg`, and a provider key; runs against a
 fabricated history, never your real one).
 

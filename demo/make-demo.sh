@@ -18,7 +18,7 @@ rm -rf $demo && mkdir -p $demo/project/src
 (
   cd $demo/project
   git init -q
-  printf '# demo\n\nA tiny demo project.\n' > README.md
+  printf '# jev-is-awesome\n\nA tiny demo project.\n' > README.md
   printf 'export function add(a, b) {\n  // TODO: validate inputs\n  return a + b;\n}\n' > src/index.js
   git add .
   git -c user.name=demo -c user.email=demo@example.com commit -qm "initial commit"
@@ -54,7 +54,7 @@ done
 cat > $demo/setup.zsh <<EOF
 cd $demo/project
 HISTFILE=$demo/history
-PROMPT='%F{blue}demo%f %F{magenta}❯%f '
+PROMPT='%F{blue}jev-is-awesome%f %F{magenta}❯%f '
 bindkey -e
 bindkey '^E' end-of-line
 GUESSWORK_SHOW_SCORE=1
@@ -68,9 +68,10 @@ vhs demo/demo.tape
 
 # --- assemble (vhs 0.12.0 does not render its outputs, see vhs#787) ------------
 # vhs captures 50 fps as separate text and cursor layers. The terminal canvas
-# is centred on a fixed 16:9 1280x720 background (Catppuccin Mocha base,
-# matching the tape's theme), an aspect ratio X/Twitter is happy with.
-local pad='pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x1e1e2e'
+# is centred on a fixed 16:9 1280x720 background (matching the tape's custom
+# "guesswork" theme -- the site's own #161616), an aspect ratio X/Twitter is
+# happy with.
+local pad='pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x161616'
 local -a inputs=(-y -r 50 -start_number 1 -i demo/frames/frame-text-%05d.png
                  -r 50 -start_number 1 -i demo/frames/frame-cursor-%05d.png)
 ffmpeg -loglevel error $inputs \
