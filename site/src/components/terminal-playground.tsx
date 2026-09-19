@@ -225,11 +225,9 @@ export function TerminalPlayground() {
         </div>
 
         <div className="border-t border-terminal-border px-4 py-2 text-[11px] text-terminal-muted">
-          Type a few characters (try <code className="text-terminal-text">git</code>,{" "}
-          <code className="text-terminal-text">docker</code> or <code className="text-terminal-text">kub</code>)
-          &middot; <kbd className="text-terminal-text">Tab</kbd> or <kbd className="text-terminal-text">&rarr;</kbd>{" "}
-          accepts &middot; ranked by the real Jev model when available, a local stand-in otherwise -- never a real
-          shell
+          Try <code className="text-terminal-text">git</code>, <code className="text-terminal-text">docker</code>, or{" "}
+          <code className="text-terminal-text">kub</code> &middot; <kbd className="text-terminal-text">Tab</kbd> or{" "}
+          <kbd className="text-terminal-text">&rarr;</kbd> to accept
         </div>
       </div>
     </div>

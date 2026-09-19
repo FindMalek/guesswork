@@ -89,6 +89,18 @@
   }
 }
 
+/* Nudges the wordmark's "press ←" hint toward the left, hinting at the key
+   to press without being a distracting full bounce. */
+@keyframes nudge-left {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+}
+
 :root {
   /* Light = the reference's "surface-light" scope: sand background, near-black text. */
   --radius: 0;

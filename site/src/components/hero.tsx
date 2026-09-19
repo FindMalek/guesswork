@@ -1,6 +1,7 @@
 import { CopyButton } from "./copy-button";
 import { InstallCommand } from "./install-command";
 import { TerminalPlayground } from "./terminal-playground";
+import { TypingWordmark } from "./typing-wordmark";
 
 const INSTALL_COMMAND = "curl -fsSL https://guesswork.findmalek.com/install.sh | bash";
 
@@ -11,12 +12,10 @@ export function Hero({ version }: { version: string }) {
         <span className="size-1.5 rounded-full bg-primary" />
         zsh plugin · v{version}
       </span>
-      <h1 className="font-heading text-4xl font-medium tracking-tight text-foreground lowercase sm:text-[54px]">
-        guesswork
-      </h1>
+      <TypingWordmark />
       <p className="mt-3.5 max-w-lg text-[15px] leading-relaxed text-muted-foreground sm:text-[17px]">
-        Fish-style autosuggestions for <span className="font-mono font-medium text-foreground">zsh</span> &mdash; but
-        the shell actually guesses right.
+        Inline <span className="font-mono font-medium text-foreground">zsh</span> autosuggestions ranked by an AI
+        model &mdash; not just prefix matches.
       </p>
 
       <div className="mt-6 w-full max-w-xl">
@@ -32,8 +31,7 @@ export function Hero({ version }: { version: string }) {
       <div className="mt-6 flex w-full max-w-3xl flex-col items-center gap-2.5">
         <TerminalPlayground />
         <p className="max-w-xl font-mono text-xs text-muted-foreground">
-          A live, in-browser demo, ranked by the real Jev model via a rate-limited server proxy &mdash; not a
-          recording, and not hardcoded. See the note under the terminal for what falls back to a local stand-in.
+          A live demo, ranked by the real Jev model &mdash; not a recording, not hardcoded.
         </p>
       </div>
     </section>
