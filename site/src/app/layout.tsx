@@ -12,10 +12,24 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const dmMono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-dm-mono" });
 const stackSansNotch = Stack_Sans_Notch({ subsets: ["latin"], variable: "--font-stack-sans-notch" });
 
+const DESCRIPTION = "Inline zsh autosuggestions ranked by an AI model — not just prefix matches.";
+
 export const metadata: Metadata = {
-  title: "guesswork — Fish-style autosuggestions for zsh",
-  description:
-    "AI-ranked zsh history autosuggestions. As you type, guesswork sends your recent history to a model and guesses which command you're retyping — including abbreviations and fuzzy matches, not just literal prefixes.",
+  metadataBase: new URL("https://guesswork.findmalek.com"),
+  title: "guesswork — AI-ranked autosuggestions for zsh",
+  description: DESCRIPTION,
+  openGraph: {
+    title: "guesswork",
+    description: DESCRIPTION,
+    url: "https://guesswork.findmalek.com",
+    siteName: "guesswork",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "guesswork",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
