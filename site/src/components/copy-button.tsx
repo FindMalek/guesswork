@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -17,13 +19,23 @@ export function CopyButton({ text }: { text: string }) {
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       onClick={handleCopy}
       aria-label="Copy install command"
-      className="ml-2 shrink-0 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/70 transition hover:bg-white/10 hover:text-white"
+      className="ml-2 shrink-0 text-xs"
     >
-      {copied ? "Copied" : "Copy"}
-    </button>
+      {copied ? (
+        <>
+          <Check className="size-3.5" /> Copied
+        </>
+      ) : (
+        <>
+          <Copy className="size-3.5" /> Copy
+        </>
+      )}
+    </Button>
   );
 }

@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono, JetBrains_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AmbientBackground } from "@/components/ambient-background";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Variable names only need to exist on the <html> className for next/font to
+// inject the actual @font-face + fallback metrics; globals.css's @theme
+// inline block references the literal family names directly (see the
+// comment there), not these variables, so their names here don't matter.
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono" });
 
 export const metadata: Metadata = {
   title: "guesswork — Fish-style autosuggestions for zsh",
@@ -22,9 +23,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      // suppressHydrationWarning: next-themes sets the resolved theme class
+      // on <html> before React hydrates, which legitimately differs from the
+      // server-rendered markup -- this is the documented way to silence that
+      // specific, expected mismatch without disabling other checks.
+      suppressHydrationWarning
+      className={`${inter.variable} ${geistMono.variable} ${jetbrainsMono.variable} h-full font-sans antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="bg-grain relative min-h-full flex flex-col">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <TooltipProvider>
+            <AmbientBackground />
+            {children}
+          </TooltipProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

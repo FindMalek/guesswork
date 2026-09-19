@@ -1,15 +1,17 @@
 import { Hero } from "@/components/hero";
-import { FeatureGrid } from "@/components/feature-grid";
 import { SiteFooter } from "@/components/site-footer";
+import { getRepoStars, getPluginVersion } from "@/lib/github";
 
-export default function Home() {
+export default async function Home() {
+  const stars = await getRepoStars();
+  const version = getPluginVersion();
+
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <main className="flex-1">
-        <Hero />
-        <FeatureGrid />
+    <div className="relative z-10 flex min-h-full flex-1 flex-col">
+      <main className="flex flex-1 flex-col items-center justify-center">
+        <Hero version={version} />
       </main>
-      <SiteFooter />
+      <SiteFooter stars={stars} />
     </div>
   );
 }
