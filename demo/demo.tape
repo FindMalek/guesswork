@@ -43,14 +43,12 @@ Sleep 800ms
 Enter
 Sleep 2500ms
 
-# 3. nothing in history matches: no suggestion, no hallucination
+# 3. nothing in history matches: no suggestion, no hallucination -- closing
+# beat. ("kgp" -> "kubectl get pods -n staging" was tried here and cut: it
+# didn't reliably clear the confidence gate in testing, and per this
+# project's own stance, an unreliable example gets swapped for a safer one
+# rather than forced -- see demo/launch.tape's comment for the same call.)
 Type "xyzzy"
 Sleep 2500ms
 Ctrl+U
-Sleep 600ms
-
-# 4. fuzzy mode again: a longer command collapsed from three letters
-Type "kgp"
-Sleep 2500ms
-Right
-Sleep 2500ms
+Sleep 1s
