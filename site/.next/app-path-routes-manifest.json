@@ -1,0 +1,12 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/suggest/route": "/api/suggest",
+  "/apple-icon.png/route": "/apple-icon.png",
+  "/favicon.ico/route": "/favicon.ico",
+  "/icon.png/route": "/icon.png",
+  "/manifest.webmanifest/route": "/manifest.webmanifest",
+  "/opengraph-image.png/route": "/opengraph-image.png",
+  "/page": "/",
+  "/twitter-image.png/route": "/twitter-image.png"
+}
