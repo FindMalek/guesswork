@@ -27,6 +27,13 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          # pnpm/action-setup reads packageManager from the repo-root
+          # package.json by default, not respecting this job's
+          # `defaults.run.working-directory` -- the root package.json is an
+          # npm project (only site/ uses pnpm), so this must be pointed at
+          # site/package.json explicitly.
+          package_json_file: site/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -56,6 +63,13 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          # pnpm/action-setup reads packageManager from the repo-root
+          # package.json by default, not respecting this job's
+          # `defaults.run.working-directory` -- the root package.json is an
+          # npm project (only site/ uses pnpm), so this must be pointed at
+          # site/package.json explicitly.
+          package_json_file: site/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -85,6 +99,13 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          # pnpm/action-setup reads packageManager from the repo-root
+          # package.json by default, not respecting this job's
+          # `defaults.run.working-directory` -- the root package.json is an
+          # npm project (only site/ uses pnpm), so this must be pointed at
+          # site/package.json explicitly.
+          package_json_file: site/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
