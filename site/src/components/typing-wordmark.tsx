@@ -6,10 +6,9 @@ import { useEffect, useState } from "react";
  * The "guesswork" wordmark as its own ghost-text demo: "g" solid, a
  * blinking cursor, "uesswork" faded -- the exact same typed/ghost visual
  * language as TerminalPlayground below it, applied to the logo itself.
- * Press ArrowLeft (or click the nudging arrow) to "accept" the rest of the
- * word, matching Tab/→ accepting a suggestion in the real terminal --
- * deliberately the opposite key, so it never fires from the same muscle
- * memory as the terminal's own accept gesture.
+ * Press ArrowRight (or click the nudging arrow) to "accept" the rest of the
+ * word -- the same key that accepts a suggestion in the real terminal,
+ * deliberately, so the gesture teaches the actual product convention.
  *
  * One-directional: reveals once per page load, then settles. No
  * localStorage -- this is a first-impression delight, not a setting, and a
@@ -22,9 +21,10 @@ export function TypingWordmark() {
     if (revealed) return;
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key !== "ArrowLeft") return;
+      if (e.key !== "ArrowRight") return;
       // Don't hijack real cursor movement if focus is in an actual input
-      // (e.g. the terminal playground's hidden buffer input below).
+      // (e.g. the terminal playground's hidden buffer input below, which
+      // handles its own ArrowRight-to-accept separately).
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
       setRevealed(true);
@@ -50,10 +50,10 @@ export function TypingWordmark() {
         <button
           type="button"
           onClick={() => setRevealed(true)}
-          aria-label="Press the left arrow key, or click here, to finish the word"
-          className="inline-flex size-6 shrink-0 animate-[nudge-left_1.4s_ease-in-out_infinite] items-center justify-center self-center border border-border bg-card font-mono text-xs text-muted-foreground"
+          aria-label="Press the right arrow key, or click here, to finish the word"
+          className="inline-flex size-6 shrink-0 animate-[nudge-right_1.4s_ease-in-out_infinite] items-center justify-center self-center border border-border bg-card font-mono text-xs text-muted-foreground"
         >
-          ←
+          →
         </button>
       )}
     </h1>

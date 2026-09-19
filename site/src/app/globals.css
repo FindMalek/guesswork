@@ -89,15 +89,15 @@
   }
 }
 
-/* Nudges the wordmark's "press ←" hint toward the left, hinting at the key
+/* Nudges the wordmark's "press →" hint toward the right, hinting at the key
    to press without being a distracting full bounce. */
-@keyframes nudge-left {
+@keyframes nudge-right {
   0%,
   100% {
     transform: translateX(0);
   }
   50% {
-    transform: translateX(-3px);
+    transform: translateX(3px);
   }
 }
 
