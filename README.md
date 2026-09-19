@@ -287,10 +287,11 @@ is discarded when the buffer changes mid-request.
 
 ## Website
 
-A Next.js landing page with an interactive playground (a hand-built terminal
-look-alike that ports the real prefix/fuzzy ranking logic client-side against
-a fabricated history — see [`site/`](./site) for details) lives in this repo
-under `site/`. Not yet deployed — see [`site/README.md`](./site/README.md).
+**[guesswork.findmalek.com](https://guesswork.findmalek.com)** — a Next.js
+landing page with an interactive terminal playground (a hand-built terminal
+look-alike, not a real shell) that ranks suggestions with the real Jev model
+through a rate-limited server proxy, falling back to a local deterministic
+stand-in when that's unavailable — see [`site/`](./site) for details.
 
 ## Contributing
 
