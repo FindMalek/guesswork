@@ -4,39 +4,42 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Light by default -- warm off-white ("sand"), not neutral grey -- with a
-   dark variant toggled via next-themes adding/removing `.dark` on <html>.
-   Palette values below are the same numeric values as the reference site
-   this was modeled on (a warm sand/grain aesthetic), not the shadcn
-   defaults' neutral greyscale. */
+/* Palette, radius, and font pairing are copied verbatim (same hex/rem
+   values) from tester.army/e2e's `.ta-landing`/`.ta-e2e`/`.ta-surface-light`
+   scopes -- dark is their actual landing-page theme, light is their
+   secondary "surface-light" scope adapted as our light mode. Not a
+   composited PNG background asset (that's their specific creative work, not
+   just a technique) -- see ambient-background.tsx for the from-scratch
+   equivalent. */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   /* var(--font-inter) etc., not literal font-family strings: next/font
-     (layout.tsx) names its generated variables --font-inter,
-     --font-jetbrains-mono, and --font-geist-mono specifically so these can
-     reference them directly without colliding with @theme's own
-     --font-sans/--font-mono/--font-heading token names -- that collision
-     (same name on both sides) is what made a var() reference here
-     self-referencing and invalid at computed-value time in an earlier
-     version of this file. Referencing the real variables (rather than
-     guessing next/font's fallback-family naming convention in a literal
-     string) picks up next/font's actual metric-matched fallback stack. */
+     (layout.tsx) names its generated variables --font-inter, --font-dm-mono,
+     and --font-stack-sans-notch specifically so these can reference them
+     directly without colliding with @theme's own token names of similar
+     shape -- a same-name collision is what made an earlier version of this
+     file's var() references self-referencing and invalid at computed-value
+     time. Body copy is Inter, code/UI-chrome mono is DM Mono, and display
+     headings are Stack Sans Notch -- the same three-font pairing as the
+     reference. */
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-jetbrains-mono);
-  --font-heading: var(--font-geist-mono);
-  /* Fixed-dark terminal window chrome -- intentionally does not follow the
-     site's light/dark toggle (real terminals are dark), so these live
+  --font-mono: var(--font-dm-mono);
+  --font-heading: var(--font-stack-sans-notch);
+  /* Terminal window chrome -- intentionally does not follow the site's
+     light/dark toggle (real terminals/code windows are dark), so these live
      outside :root/.dark and are the only place their values are defined.
-     Components reference them as bg-terminal-bg etc., never a literal hex. */
+     Components reference them as bg-terminal-bg etc., never a literal hex.
+     Values match the reference's actual code-window chrome exactly
+     (ta-grey-450 card, ta-grey-500 header, ta-grey-400 border, ta-grey-300
+     dots, ta-grey-100 muted text, ta-sand-50 body text). */
   --color-terminal-bg: var(--terminal-bg);
   --color-terminal-header: var(--terminal-header);
+  --color-terminal-border: var(--terminal-border);
   --color-terminal-text: var(--terminal-text);
   --color-terminal-muted: var(--terminal-muted);
-  --color-terminal-red: var(--terminal-red);
-  --color-terminal-amber: var(--terminal-amber);
-  --color-terminal-green: var(--terminal-green);
+  --color-terminal-dot: var(--terminal-dot);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -66,13 +69,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
 }
 
 @keyframes gw-blink {
@@ -87,83 +90,80 @@
 }
 
 :root {
-  /* Warm sand light theme */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.147 0.004 49.25);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.147 0.004 49.25);
-  --primary: oklch(0.555 0.163 48.998);
-  --primary-foreground: oklch(0.987 0.022 95.277);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0.001 106.424);
-  --muted-foreground: oklch(0.553 0.013 58.071);
-  --accent: oklch(0.97 0.001 106.424);
-  --accent-foreground: oklch(0.216 0.006 56.043);
+  /* Light = the reference's "surface-light" scope: sand background, near-black text. */
+  --radius: 0;
+  --background: #f9f8f7;
+  --foreground: #161616;
+  --card: #ffffff;
+  --card-foreground: #161616;
+  --popover: #ffffff;
+  --popover-foreground: #161616;
+  --primary: #ff8001;
+  --primary-foreground: #ffffff;
+  --secondary: #e6e4dc;
+  --secondary-foreground: #161616;
+  --muted: #e6e4dc;
+  --muted-foreground: #58554c;
+  --accent: #ff8001;
+  --accent-foreground: #161616;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.923 0.003 48.717);
-  --input: oklch(0.923 0.003 48.717);
-  --ring: oklch(0.709 0.01 56.259);
-  --chart-1: oklch(0.879 0.169 91.605);
-  --chart-2: oklch(0.769 0.188 70.08);
-  --chart-3: oklch(0.666 0.179 58.318);
-  --chart-4: oklch(0.555 0.163 48.998);
-  --chart-5: oklch(0.473 0.137 46.201);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0.001 106.423);
-  --sidebar-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-primary: oklch(0.666 0.179 58.318);
-  --sidebar-primary-foreground: oklch(0.987 0.022 95.277);
-  --sidebar-accent: oklch(0.97 0.001 106.424);
-  --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
-  --sidebar-border: oklch(0.923 0.003 48.717);
-  --sidebar-ring: oklch(0.709 0.01 56.259);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
-  --terminal-bg: #161616;
-  --terminal-header: #1f1f1d;
-  --terminal-text: #f6f6f6;
-  --terminal-muted: #898477;
-  --terminal-red: #df5748;
-  --terminal-amber: #dca842;
-  --terminal-green: #48a964;
+  --border: #dcd8ce;
+  --input: #dcd8ce;
+  --ring: #ff8001;
+  --chart-1: #ff8001;
+  --chart-2: #58554c;
+  --chart-3: #898477;
+  --chart-4: #dcd8ce;
+  --chart-5: #161616;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #161616;
+  --sidebar-primary: #ff8001;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6e4dc;
+  --sidebar-accent-foreground: #161616;
+  --sidebar-border: #dcd8ce;
+  --sidebar-ring: #ff8001;
+  --terminal-bg: #1e1e1e;
+  --terminal-header: #161616;
+  --terminal-border: #4e4e4e;
+  --terminal-text: #f9f8f7;
+  --terminal-muted: #cecece;
+  --terminal-dot: #787878;
 }
 
 .dark {
-  /* Warm near-black dark theme -- tinted with the same palette family as
-     light mode, not a neutral zinc/grey, so the toggle doesn't feel like
-     two unrelated sites. */
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
-  --primary: oklch(0.473 0.137 46.201);
-  --primary-foreground: oklch(0.987 0.022 95.277);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
+  /* Dark = the reference's actual `.ta-landing.ta-e2e` landing-page scope. */
+  --background: #161616;
+  --foreground: #f9f8f7;
+  --card: #1e1e1e;
+  --card-foreground: #f9f8f7;
+  --popover: #4e4e4e;
+  --popover-foreground: #f9f8f7;
+  --primary: #ff8001;
+  --primary-foreground: #161616;
+  --secondary: #4e4e4e;
+  --secondary-foreground: #f9f8f7;
+  --muted: #4e4e4e;
+  --muted-foreground: #cecece;
+  --accent: #ff8001;
+  --accent-foreground: #161616;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.553 0.013 58.071);
-  --chart-1: oklch(0.879 0.169 91.605);
-  --chart-2: oklch(0.769 0.188 70.08);
-  --chart-3: oklch(0.666 0.179 58.318);
-  --chart-4: oklch(0.555 0.163 48.998);
-  --chart-5: oklch(0.473 0.137 46.201);
-  --sidebar: oklch(0.216 0.006 56.043);
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.769 0.188 70.08);
-  --sidebar-primary-foreground: oklch(0.279 0.077 45.635);
-  --sidebar-accent: oklch(0.268 0.007 34.298);
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.553 0.013 58.071);
+  --border: #4e4e4e;
+  --input: #4e4e4e;
+  --ring: #ff8001;
+  --chart-1: #ff8001;
+  --chart-2: #cecece;
+  --chart-3: #9f9f9f;
+  --chart-4: #4e4e4e;
+  --chart-5: #f9f8f7;
+  --sidebar: #1e1e1e;
+  --sidebar-foreground: #f9f8f7;
+  --sidebar-primary: #ff8001;
+  --sidebar-primary-foreground: #161616;
+  --sidebar-accent: #4e4e4e;
+  --sidebar-accent-foreground: #f9f8f7;
+  --sidebar-border: #4e4e4e;
+  --sidebar-ring: #ff8001;
 }
 
 @layer base {
@@ -180,8 +180,7 @@
 
 /* Subtle grain texture, fixed over the whole viewport. A tiled SVG
    feTurbulence noise at very low opacity, blended with `overlay` so it reads
-   as paper grain rather than visible speckle -- the specific quality the
-   reference site's background was chosen for. Works unchanged in both
+   as paper grain rather than visible speckle. Works unchanged in both
    themes since overlay blending adapts to whatever's underneath; the noise
    itself doesn't carry theme-specific color. */
 .bg-grain::before {
@@ -196,9 +195,10 @@
 }
 
 /* Ordered-dither dot screen for the hero's ambient glow (see
-   ambient-background.tsx). Tint is derived from the theme's own --primary
-   via color-mix rather than a separate hardcoded color, so it stays in sync
-   if the palette ever changes. */
+   ambient-background.tsx) -- a from-scratch equivalent of the reference's
+   dithered PNG texture, not a copy of the file itself. Tint is derived from
+   the theme's own --primary via color-mix rather than a separate hardcoded
+   color, so it stays in sync if the palette ever changes. */
 .bg-dither-matrix {
   background-image: radial-gradient(color-mix(in oklch, var(--primary) 14%, transparent) 1px, transparent 0);
   background-size: 8px 8px;

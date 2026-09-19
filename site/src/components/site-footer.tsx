@@ -26,7 +26,7 @@ export function SiteFooter({ stars }: { stars: number | null }) {
             href="https://github.com/findmalek/guesswork"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded border border-black/5 bg-card px-2.5 py-1 font-mono text-[12px] text-foreground transition-all hover:border-black/20 dark:border-white/5 dark:hover:border-white/20"
+            className="inline-flex items-center gap-1.5 border border-black/5 bg-card px-2.5 py-1 font-mono text-[12px] text-foreground transition-all hover:border-black/20 dark:border-white/5 dark:hover:border-white/20"
           >
             <GithubMark className="size-3.5" />
             <span className="hidden text-muted-foreground sm:inline">findmalek/guesswork</span>

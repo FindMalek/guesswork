@@ -176,38 +176,38 @@ export function TerminalPlayground() {
             key={preset}
             type="button"
             onClick={() => applyPreset(preset)}
-            className="rounded-full border border-border bg-card px-2.5 py-1 text-foreground/70 transition hover:border-primary hover:text-primary"
+            className="border border-border bg-card px-2.5 py-1 text-foreground/70 transition hover:border-primary hover:text-primary"
           >
             {preset}
           </button>
         ))}
       </div>
       <div
-        className="rounded-xl border border-white/10 bg-terminal-bg shadow-2xl shadow-black/40"
+        className="border border-terminal-border bg-terminal-bg shadow-2xl shadow-black/40"
         onClick={() => inputRef.current?.focus()}
       >
-        <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-3">
-          <span className="h-3 w-3 rounded-full bg-terminal-red" />
-          <span className="h-3 w-3 rounded-full bg-terminal-amber" />
-          <span className="h-3 w-3 rounded-full bg-terminal-green" />
-          <span className="ml-3 text-xs text-white/40">zsh &mdash; guesswork playground</span>
+        <div className="flex items-center gap-1.5 border-b border-terminal-border bg-terminal-header px-4 py-3">
+          <span className="h-2 w-2 rounded-full bg-terminal-dot" />
+          <span className="h-2 w-2 rounded-full bg-terminal-dot" />
+          <span className="h-2 w-2 rounded-full bg-terminal-dot" />
+          <span className="ml-3 text-xs text-terminal-muted">zsh &mdash; guesswork playground</span>
         </div>
 
         <div className="cursor-text px-4 py-4 font-mono text-[13px] leading-6 sm:text-sm">
           {ranLines.map((line, i) => (
             <div key={i} className="text-terminal-muted">
-              <span className="text-terminal-green">{PROMPT}</span> {line.command}
+              <span className="text-primary">{PROMPT}</span> {line.command}
             </div>
           ))}
 
           <div className="relative flex items-start">
-            <span className="mr-2 select-none text-terminal-green">{PROMPT}</span>
+            <span className="mr-2 select-none text-primary">{PROMPT}</span>
             <span className="whitespace-pre-wrap break-all text-terminal-text">
               {buffer}
-              <span className="inline-block w-[1ch] animate-[gw-blink_1s_steps(1)_infinite] bg-white/80 align-middle">
+              <span className="inline-block w-[1ch] animate-[gw-blink_1s_steps(1)_infinite] bg-terminal-text align-middle">
                 &nbsp;
               </span>
-              {ghost && <span className="text-white/35">{ghost.text}</span>}
+              {ghost && <span className="text-terminal-muted">{ghost.text}</span>}
             </span>
           </div>
 
@@ -224,11 +224,12 @@ export function TerminalPlayground() {
           />
         </div>
 
-        <div className="border-t border-white/10 px-4 py-2 text-[11px] text-white/30">
-          Type a few characters (try <code className="text-white/50">git</code>,{" "}
-          <code className="text-white/50">docker</code> or <code className="text-white/50">kub</code>) &middot;{" "}
-          <kbd className="text-white/50">Tab</kbd> or <kbd className="text-white/50">&rarr;</kbd> accepts &middot;
-          ranked by the real Jev model when available, a local stand-in otherwise -- never a real shell
+        <div className="border-t border-terminal-border px-4 py-2 text-[11px] text-terminal-muted">
+          Type a few characters (try <code className="text-terminal-text">git</code>,{" "}
+          <code className="text-terminal-text">docker</code> or <code className="text-terminal-text">kub</code>)
+          &middot; <kbd className="text-terminal-text">Tab</kbd> or <kbd className="text-terminal-text">&rarr;</kbd>{" "}
+          accepts &middot; ranked by the real Jev model when available, a local stand-in otherwise -- never a real
+          shell
         </div>
       </div>
     </div>
