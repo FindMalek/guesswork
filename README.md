@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/findmalek/guesswork/actions/workflows/ci.yml"><img src="https://shieldcn.dev/github/ci/findmalek/guesswork.svg?workflow=ci.yml&variant=secondary" alt="CI" /></a>
+  <a href="https://github.com/findmalek/guesswork/releases"><img src="https://shieldcn.dev/github/release/findmalek/guesswork.svg?variant=secondary" alt="Latest release" /></a>
   <a href="https://github.com/findmalek/guesswork/blob/main/LICENSE"><img src="https://shieldcn.dev/github/license/findmalek/guesswork.svg?variant=secondary" alt="License" /></a>
   <a href="https://github.com/findmalek/guesswork/commits/main"><img src="https://shieldcn.dev/github/last-commit/findmalek/guesswork.svg?variant=secondary" alt="Last commit" /></a>
   <a href="https://nodejs.org"><img src="https://shieldcn.dev/badge/node-22%2B-339933.svg?logo=nodedotjs&logoColor=white&variant=secondary" alt="Node 22+" /></a>
@@ -22,6 +23,23 @@
 ```sh
 curl -fsSL https://guesswork.findmalek.com/install.sh | bash
 ```
+
+- **AI-ranked, not prefix-matched** — understands abbreviations and fuzzy
+  matches, not just commands that start with what you typed
+- **Fish-style inline suggestions** — grey text after your cursor, accept
+  with <kbd>→</kbd>, works in emacs and vi keymaps
+- **Four providers** — TypeSafe or Cloudflare Workers AI run the real Jev
+  model; Anthropic or Groq work as fallbacks if you'd rather not sign up for
+  either
+- **Runs anywhere zsh does** — hooks `zle` directly, no raw escape codes, no
+  terminal-specific code path
+- **Cheap** — ~$0.000081 per request on Jev; a few hundred requests a day for
+  a year lands around $10 total
+- **No build step** — plain TypeScript, run directly by Node
+
+**Jump to:** [Install](#install) · [Choose a provider](#choose-a-provider) ·
+[Configuration](#configuration) · [How it works](#how-it-works) ·
+[What it costs](#what-it-costs) · [CLI](#cli) · [Contributing](#contributing)
 
 Prefix-matching history search only works if you remember how a command
 *started*. You know you ran something with `--dir blog` in it last week, but
@@ -302,6 +320,10 @@ through a rate-limited server proxy, falling back to a local deterministic
 stand-in when that's unavailable — see [`site/`](./site) for details.
 
 ## Contributing
+
+<p align="center">
+  <a href="https://github.com/findmalek/guesswork/graphs/contributors"><img src="https://shieldcn.dev/contributors/findmalek/guesswork.svg?limit=12" alt="Contributors" /></a>
+</p>
 
 Every PR needs a linked issue first — open one with the
 [detailed-task template](https://github.com/findmalek/guesswork/issues/new/choose)
