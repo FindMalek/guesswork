@@ -40,6 +40,13 @@ That's a real transcript, not a mockup — regenerate it with
 `demo/make-demo.sh` (needs `vhs`, `ffmpeg`, and a provider key; runs against a
 fabricated history, never your real one).
 
+There's also `demo/make-launch-demo.sh` / `demo/launch.tape`, a longer,
+slower-paced cut of the same fabricated environment meant for a first-impression
+launch video rather than a quick inline GIF — it covers the same prefix/fuzzy
+suggestion beats plus a clean closing shot, and deliberately stops short of
+the install one-liner and setup wizard (those need a real network fetch and
+real provider credentials, so they're recorded by hand separately).
+
 ## Why not just fzf / prefix search?
 
 Those are still the right tool for *searching* history on demand. guesswork

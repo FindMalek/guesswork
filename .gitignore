@@ -1,2 +1,30 @@
+# dependencies
 node_modules/
+
+# env files -- never commit a real secret; .env.example is the one exception
+.env
+.env.*
+!.env.example
+
+# typescript
+*.tsbuildinfo
+
+# os
+.DS_Store
+
+# editors
+.vscode/
+.idea/
+*.swp
+
+# logs
+*.log
+npm-debug.log*
+
+# demo recording byproduct -- demo.gif/demo.mp4 themselves are NOT ignored;
+# they're versioned assets embedded in the README, updated when you
+# re-record. frames/ is just vhs's intermediate PNG sequence.
+demo/frames/
+
+# claude
 .claude/worktrees/
