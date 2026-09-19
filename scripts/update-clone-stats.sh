@@ -35,7 +35,10 @@ TOTAL_FORMATTED=$(printf "%'d" "$TOTAL" 2>/dev/null || echo "$TOTAL")
 # needs its space URL-encoded the same way TOTAL_FORMATTED's is below.
 BADGE_LABEL="installs%20(approx)"
 BADGE_URL="https://shieldcn.dev/badge/${BADGE_LABEL}-${TOTAL_FORMATTED// /%20}-4c1.svg?variant=secondary"
-BADGE_LINE="[![installs (approx)](${BADGE_URL})](https://github.com/${REPO})"
+# HTML, not markdown: the badge lives inside a <p align="center"> block, and
+# GitHub doesn't parse markdown inside a raw HTML block -- a ![](...) there
+# renders as literal source text.
+BADGE_LINE="  <a href=\"https://github.com/${REPO}\"><img src=\"${BADGE_URL}\" alt=\"installs (approx)\" /></a>"
 
 awk -v start="$MARKER_START" -v end="$MARKER_END" -v badge="$BADGE_LINE" '
   $0 == start { print; print badge; skip = 1; next }
