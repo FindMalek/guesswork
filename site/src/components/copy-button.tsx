@@ -29,7 +29,7 @@ export function CopyButton({ text }: { text: string }) {
       size="sm"
       onClick={handleCopy}
       aria-label={state === "failed" ? "Copy failed -- select the command manually" : "Copy install command"}
-      className="ml-2 shrink-0 text-xs"
+      className="ml-2 shrink-0"
     >
       {state === "copied" ? (
         <>
