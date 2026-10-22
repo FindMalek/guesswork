@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   clone-stats:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, the-keep]
     env:
       HAS_TOKEN: ${{ secrets.PROJECT_TOKEN != '' }}
     steps:

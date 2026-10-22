@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, the-keep]
     strategy:
       matrix:
         node-version: [22, 24]
@@ -34,7 +34,7 @@ jobs:
   # Add them under Settings → Secrets and variables → Actions to enable it;
   # costs are tiny (see the README's "What it costs" section) but real.
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, the-keep]
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
